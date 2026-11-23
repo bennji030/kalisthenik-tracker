@@ -76,7 +76,7 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
             value={profile.heightCm ?? null}
             onChange={(v) => {
               if (v == null) { mark('heightCm', false); void save({ heightCm: undefined }); }
-              else if (isValidHeight(v)) { mark('heightCm', false); void save({ heightCm: v }); }
+              else if (Number.isInteger(v) && isValidHeight(v)) { mark('heightCm', false); void save({ heightCm: v }); }
               else mark('heightCm', true);
             }}
           />
