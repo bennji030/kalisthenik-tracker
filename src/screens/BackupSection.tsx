@@ -51,7 +51,7 @@ export function BackupSection({ toast }: { toast: (m: string) => void }) {
         )}
       </section>
 
-      <section className="card">
+      <section className="card readable">
         {!standalone ? (
           <p>⚠️ Du nutzt die Seite im Browser. Installiere sie: <b>Teilen → „Zum Home-Bildschirm“</b>. Nur dann bleiben die Daten auf dem iPhone sicher gespeichert und die App läuft offline.</p>
         ) : (
