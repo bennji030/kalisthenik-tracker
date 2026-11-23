@@ -1,4 +1,4 @@
-# Kalisthenik-Tracker
+# Calisthenics-Tracker
 
 Offline-Trainings-App (PWA) für Calisthenics: Push/Pull-Plan, automatische Steigerung
 (Wiederholung für Wiederholung, dann +Gewicht), Pausentimer, Verlauf mit Diagrammen, Backup als JSON.
