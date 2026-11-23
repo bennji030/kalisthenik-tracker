@@ -53,9 +53,11 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); }
-/* Tab-Leiste: ohne Höhe an html/body misst iOS-Standalone das Viewport zu kurz, die fixe Leiste hängt dann über dem unteren Rand. */
-html { height: 100%; }
-body { min-height: 100%; }
+/* Tab-Leiste: Bei kurzen Seiten (z. B. Training) ist das Dokument kürzer als der Bildschirm, und iOS-Standalone misst das Viewport für die fixe Leiste zu kurz, sie hängt dann über dem unteren Rand. Mit voller Bildschirmhöhe als Minimum ist jede Seite so hoch wie der Bildschirm, unabhängig vom Inhalt. */
+html, body { min-height: 100vh; }
+@supports (min-height: 100dvh) {
+  html, body { min-height: 100dvh; }
+}
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   font-size: 16px;
