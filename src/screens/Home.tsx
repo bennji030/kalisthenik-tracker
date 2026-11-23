@@ -47,9 +47,13 @@ export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void
   return (
     <div className="screen">
       <header className="home-head">
-        <div className={`streak ${flames > 0 ? '' : 'streak-zero'}`} aria-label={`${flames} Training${flames === 1 ? '' : 's'} in Folge`}>
+        <div
+          className={flames > 0 ? 'streak' : 'streak streak-zero'}
+          role="img"
+          aria-label={`${flames} Training${flames === 1 ? '' : 's'} in Folge`}
+        >
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-            <path d="M12 2c1 3.5 4 5.5 4 9.500a4 4 0 0 1-1.500 3.100c.3-1.600-.2-3-1.500-4.100-.4 2-1.500 3-2.5 3.900C9 15.5 8 16.500 8 18a4 4 0 0 0 8 0h2a6 6 0 0 1-12 0c0-2.500 1.500-4 2.800-5.300C9.700 11.300 10.500 9 9 6c1.500.3 2.600-.5 3-4z" />
+            <path d="M19.48 12.35c-1.57-4.08-7.16-4.3-5.81-10.23.1-.44-.37-.78-.75-.55C9.29 3.71 6.68 8 8.87 13.62c.18.46-.36.89-.75.59-1.81-1.37-2-3.34-1.84-4.75.06-.52-.62-.77-.91-.34C4.69 10.16 4 11.84 4 14.37c.38 5.6 5.11 7.32 6.81 7.54 2.43.31 5.06-.14 6.95-1.87 2.08-1.93 2.84-5.01 1.72-7.69z" />
           </svg>
           <span>{flames}</span>
         </div>

@@ -19,8 +19,7 @@ describe('streak', () => {
     expect(streak(s, 4, now)).toBe(10);
   });
   it('Sunday 23:30 belongs to old week, Monday 00:30 to new', () => {
-    const sun = [...week(2).slice(0, 3), done(2026, 10, 8, 23)];
-    sun[3] = { startedAt: new Date(2026, 10, 8, 23, 30).getTime(), finishedAt: 1 };
+    const sun = [...week(2).slice(0, 3), { startedAt: new Date(2026, 10, 8, 23, 30).getTime(), finishedAt: 1 }];
     expect(streak(sun, 4, now)).toBe(4);
     const mon = { startedAt: new Date(2026, 10, 9, 0, 30).getTime(), finishedAt: 1 };
     expect(streak([...week(2).slice(0, 3), mon], 4, now)).toBe(1);
