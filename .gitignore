@@ -1,3 +1,5 @@
 node_modules
 dist
 *.local
+/factory/jobs/
+.claude/settings.local.json
