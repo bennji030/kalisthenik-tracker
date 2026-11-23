@@ -16,6 +16,9 @@ in interactive sessions explain each step briefly before doing it.
   clears anything. Destructive actions need an inline confirm step.
 - No `window.alert/confirm/prompt` (they misbehave in iOS standalone mode); use
   the inline confirm pattern from `Workout.tsx`.
+- The visible app name is "Calisthenics", but the IndexedDB name `kalisthenik`, the
+  backup identifier `kalisthenik-tracker` and the base path `/kalisthenik-tracker/`
+  must not be renamed.
 - No backend, accounts, analytics or tracking. A network request only when an
   issue asks for one (e.g. a food database lookup), and the app must keep working
   offline without it.
@@ -34,9 +37,12 @@ framework, no router, no chart library.
 src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry)
 src/progression.ts   suggest(): double progression, rep by rep (see below)
 src/progression.test.ts  tests for it (protected)
+src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter on Home)
+src/streak.test.ts  tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
+src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
 src/util.ts          formatting helpers (German number/date format)
@@ -63,6 +69,8 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   of the range → +increment kg and back to the bottom; missed → same target; 3
   misses in a row at the same weight → about −10 % and rebuild. History is per
   slot within its training day.
+- Streak (`streak`): weeks Mo–So; a past week counts when finished sessions ≥ number of
+  training days (templates), the current week never breaks it; flames = sessions in those weeks.
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
   Calories and protein are still planned.
