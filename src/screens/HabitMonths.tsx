@@ -6,6 +6,7 @@ import { DayHeader } from '../components/MonthGrid';
 import { LineChart } from '../components/LineChart';
 import { WeightStats } from '../components/Weight';
 import { sessionDayKeys } from '../habits';
+import { cardioOnly, strengthOnly } from '../cardio';
 import { dayMonthCount, earliestKey, monthList, sessionMonthCount, sessionSummary, weighSummary } from '../monthTiles';
 import { fmtMonth, fmtShortDate } from '../util';
 import { dayKey, dayTs } from '../weight';
@@ -26,7 +27,9 @@ export function HabitMonths({ kind, onBack, goHistory }: {
   if (!weights || !sessions) return null;
   const now = Date.now();
   const todayKey = dayKey(now);
-  const days = kind === 'sessions' ? sessionDayKeys(sessions) : new Set(weights.map((w) => w.date));
+  const strength = strengthOnly(sessions);
+  const days = kind === 'sessions' ? sessionDayKeys(strength) : new Set(weights.map((w) => w.date));
+  const cardio = kind === 'sessions' ? sessionDayKeys(cardioOnly(sessions)) : new Set<string>();
   return (
     <div className="screen">
       <header className="wo-head">
@@ -36,19 +39,19 @@ export function HabitMonths({ kind, onBack, goHistory }: {
       {kind === 'weights' && weights.length > 0 && <WeightCurve weights={weights} now={now} />}
       <button className="btn btn-ghost link-btn" onClick={() => goHistory(kind)}>Zum Verlauf</button>
       <div className="cards">
-        {monthList(earliestKey(days), now).map(({ year, month }) => (
+        {monthList(earliestKey([...days, ...cardio]), now).map(({ year, month }) => (
           <section className="card month-tiles" key={`${year}-${month}`}>
             <h2>{fmtMonth(year, month)}</h2>
             <DayHeader />
             {monthGrid(year, month).map((week, i) => (
               <div className="cal-row" key={i}>
                 {week.map((k, j) => k
-                  ? <span key={k} className={`tile${days.has(k) ? ' tile-on' : ''}${k > todayKey ? ' tile-future' : ''}`} />
+                  ? <span key={k} className={`tile${days.has(k) ? ' tile-on' : cardio.has(k) ? ' tile-cardio' : ''}${k > todayKey ? ' tile-future' : ''}`} />
                   : <span key={`e${j}`} />)}
               </div>
             ))}
             <p className="muted small">
-              {kind === 'sessions' ? sessionSummary(sessionMonthCount(sessions, year, month)) : weighSummary(dayMonthCount(days, year, month))}
+              {kind === 'sessions' ? sessionSummary(sessionMonthCount(strength, year, month)) : weighSummary(dayMonthCount(days, year, month))}
             </p>
           </section>
         ))}

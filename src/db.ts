@@ -29,6 +29,7 @@ export interface Template {
   weekdays: number[]; // 0 = So, 1 = Mo, ...
   order: number;
   slots: Slot[];
+  kind?: 'cardio'; // fehlt = Krafttag; Cardio-Tage haben slots: []
 }
 
 export interface SetLog {
@@ -60,6 +61,9 @@ export interface Session {
   startedAt: number;
   finishedAt: number | null;
   entries: EntryLog[];
+  kind?: 'cardio'; // Cardio abgehakt: entries leer, finishedAt sofort gesetzt
+  minutes?: number;
+  note?: string;
 }
 
 /** Körpergewicht, ein Eintrag pro lokalem Kalendertag (YYYY-MM-DD). */

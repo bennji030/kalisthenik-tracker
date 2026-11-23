@@ -53,6 +53,8 @@ export async function importBackup(file: File): Promise<number> {
       await db.weights.bulkAdd(data.weights);
     }
     await setMeta('seeded', true);
+    // Ein gelöschter Cardio-Tag soll nach dem Import nicht wieder angelegt werden.
+    await setMeta('cardioDay', true);
     await setMeta('lastBackup', Date.now());
   });
   return data.sessions.length;

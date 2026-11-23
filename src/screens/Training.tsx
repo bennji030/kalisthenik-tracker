@@ -4,9 +4,11 @@ import { db, type Exercise, type Session, type Template } from '../db';
 import { dayStatus, plannedWeekdays, weekKeys } from '../calendar';
 import { defaultTemplate } from '../entryDay';
 import { sessionDayKeys } from '../habits';
+import { cardioOnly, cardioSummary, isCardio, isCardioSession, strengthOnly } from '../cardio';
 import { planTemplate, startSession, type Plan } from '../sessions';
 import { DayCell, DayHeader, MonthGrid } from '../components/MonthGrid';
 import { SessionLog } from '../components/SessionLog';
+import { CardioCheck } from '../components/CardioCheck';
 import { fmtDate, fmtAddedKg, fmtLongDate, fmtMonth, WEEKDAYS } from '../util';
 import { dayKey, dayTs } from '../weight';
 
@@ -26,9 +28,11 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
 
   const active = sessions.find((s) => s.finishedAt == null);
   const finished = sessions.filter((s) => s.finishedAt);
-  const doneDays = sessionDayKeys(sessions);
-  const planned = plannedWeekdays(templates);
-  const statusOf = (k: string) => dayStatus(k, todayKey, doneDays, planned);
+  const doneDays = sessionDayKeys(strengthOnly(sessions));
+  const cardioDays = sessionDayKeys(cardioOnly(sessions));
+  const planned = plannedWeekdays(strengthOnly(templates));
+  const cardioPlanned = plannedWeekdays(cardioOnly(templates));
+  const statusOf = (k: string) => dayStatus(k, todayKey, doneDays, planned, cardioDays, cardioPlanned);
   const exMap = new Map(exercises.map((e) => [e.id, e]));
 
   const isToday = selectedDay === todayKey;
@@ -77,13 +81,26 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
     />
   );
 
+  // Cardio darf auch abgehakt werden, während ein Krafttraining läuft.
+  const cardioCard = (t: Template, canLog: boolean) => (
+    <section key={t.id} className="card">
+      <CardioCheck
+        template={t}
+        day={isToday ? undefined : selectedDay}
+        canLog={canLog}
+        onLogged={() => { setSelected(null); setEntering(false); }}
+      />
+    </section>
+  );
+  const dayCard = (t: Template, canStart: boolean) => (isCardio(t) ? cardioCard(t, canStart) : planCard(t, canStart));
+
   let dayCards;
   if (chosen) {
-    dayCards = planCard(chosen, true);
+    dayCards = dayCard(chosen, true);
   } else if (daySessions.length) {
-    dayCards = daySessions.map((s) => <DoneCard key={s.id} s={s} exMap={exMap} />);
-  } else if (status === 'open') {
-    dayCards = dayTemplates.map((t) => planCard(t, isToday));
+    dayCards = daySessions.map((s) => (isCardioSession(s) ? <CardioDoneCard key={s.id} s={s} /> : <DoneCard key={s.id} s={s} exMap={exMap} />));
+  } else if (status === 'open' || status === 'cardio-open') {
+    dayCards = dayTemplates.map((t) => dayCard(t, isToday));
   } else if (status === 'missed') {
     dayCards = (
       <section className="card">
@@ -172,6 +189,15 @@ function DoneCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> }) {
       <h2>{s.templateName}</h2>
       <p className="muted small">{fmtDate(s.startedAt, true)} · {mins} min</p>
       <SessionLog entries={s.entries} exMap={exMap} />
+    </section>
+  );
+}
+
+function CardioDoneCard({ s }: { s: Session }) {
+  return (
+    <section className="card">
+      <h2>{s.templateName}</h2>
+      <p className="muted small">{fmtDate(s.startedAt, true)} · {cardioSummary(s)}</p>
     </section>
   );
 }

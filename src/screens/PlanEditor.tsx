@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type ExType, type Slot, type Template } from '../db';
 import { NumInput } from '../components/NumInput';
 import { uid, WEEKDAYS } from '../util';
+import { isCardio } from '../cardio';
 
 const TYPE_LABEL: Record<ExType, string> = { weighted: 'Wdh. + Gewicht', reps: 'Wdh.', hold: 'Haltezeit' };
 
@@ -18,6 +19,8 @@ export function PlanScreen() {
 
   const addTemplate = () =>
     setEditing({ id: uid(), name: 'Neuer Tag', weekdays: [], order: templates.length, slots: [] });
+  const addCardio = () =>
+    setEditing({ id: uid(), name: 'Cardio', weekdays: [], order: templates.length, slots: [], kind: 'cardio' });
 
   return (
     <div className="screen">
@@ -33,18 +36,25 @@ export function PlanScreen() {
             </div>
             <span className="muted">Bearbeiten ›</span>
           </button>
-          <ul className="log">
-            {t.slots.map((s) => (
-              <li key={s.id}>
-                <span>{exMap.get(s.exerciseId)?.name ?? '?'}</span>
-                <span className="muted">{slotText(s, exMap.get(s.exerciseId))}</span>
-              </li>
-            ))}
-          </ul>
+          {isCardio(t) ? (
+            <p className="muted small">Cardio · abhaken</p>
+          ) : (
+            <ul className="log">
+              {t.slots.map((s) => (
+                <li key={s.id}>
+                  <span>{exMap.get(s.exerciseId)?.name ?? '?'}</span>
+                  <span className="muted">{slotText(s, exMap.get(s.exerciseId))}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ))}
       </div>
-      <button className="btn" onClick={addTemplate}>+ Trainingstag</button>
+      <div className="plan-add">
+        <button className="btn" onClick={addTemplate}>+ Trainingstag</button>
+        <button className="btn" onClick={addCardio}>+ Cardio-Tag</button>
+      </div>
 
       <h1 className="mt">Übungen</h1>
       <button className="btn" onClick={() => setShowLib(!showLib)}>{showLib ? 'Übungsliste schließen' : 'Übungsliste bearbeiten'}</button>
@@ -109,6 +119,8 @@ function TemplateEditor({ initial, exercises, onClose }: { initial: Template; ex
         </div>
       </div>
 
+      {!isCardio(t) && (
+      <>
       <div className="cards">
       {t.slots.map((s, i) => {
         const ex = exMap.get(s.exerciseId);
@@ -152,6 +164,8 @@ function TemplateEditor({ initial, exercises, onClose }: { initial: Template; ex
       })}
       </div>
       <button className="btn" onClick={addSlot}>+ Übung</button>
+      </>
+      )}
 
       <div className="wo-actions">
         <button className="btn btn-primary btn-big" onClick={save}>Speichern</button>

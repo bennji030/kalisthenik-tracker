@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getMeta } from './db';
 import { applyTheme, parseThemePref, resolveTheme } from './theme';
 import { seedIfEmpty } from './seed';
+import { ensureCardioDayInDb } from './cardio';
 import { activeSession } from './sessions';
 import { Home } from './screens/Home';
 import { Training } from './screens/Training';
@@ -33,6 +34,7 @@ export function App() {
   useEffect(() => {
     void (async () => {
       await seedIfEmpty();
+      await ensureCardioDayInDb();
       // Dauerhaften Speicher anfragen (iOS: vor allem relevant als Home-Bildschirm-App).
       try { await navigator.storage?.persist?.(); } catch { /* egal */ }
       const a = await activeSession();
