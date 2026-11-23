@@ -1,15 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { dotGrid, sessionDayKeys, weekDayCount, weekSessionCount } from '../habits';
-import type { HistoryTab } from '../screens/History';
+import type { HabitKind } from '../screens/HabitMonths';
 
 function HabitCard({ title, dots, count, target, tab, onOpen }: {
   title: string;
   dots: boolean[];
   count: number;
   target: number;
-  tab: HistoryTab;
-  onOpen: (tab: HistoryTab) => void;
+  tab: HabitKind;
+  onOpen: (tab: HabitKind) => void;
 }) {
   const fill = target > 0 ? Math.min(count / target, 1) : 0;
   return (
@@ -26,13 +26,13 @@ function HabitCard({ title, dots, count, target, tab, onOpen }: {
       <button
         className="habit-hit"
         onClick={() => onOpen(tab)}
-        aria-label={`${title}, ${count} von ${target} diese Woche, ${tab === 'weights' ? 'Gewicht' : 'Trainings'} öffnen`}
+        aria-label={`${title}, ${count} von ${target} diese Woche, Monatsübersicht öffnen`}
       />
     </section>
   );
 }
 
-export function Habits({ templateCount, goHistory }: { templateCount: number; goHistory: (tab: HistoryTab) => void }) {
+export function Habits({ templateCount, goHabit }: { templateCount: number; goHabit: (kind: HabitKind) => void }) {
   const weights = useLiveQuery(() => db.weights.toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
   if (!weights || !sessions) return null;
@@ -44,11 +44,11 @@ export function Habits({ templateCount, goHistory }: { templateCount: number; go
       <h2 className="habits-head">Gewohnheiten</h2>
       <div className="cards cards-habits">
         <HabitCard
-          title="Weigh-In" tab="weights" onOpen={goHistory}
+          title="Weigh-In" tab="weights" onOpen={goHabit}
           dots={dotGrid(weighed, now)} count={weekDayCount(weighed, now)} target={7}
         />
         <HabitCard
-          title="Trainings" tab="sessions" onOpen={goHistory}
+          title="Trainings" tab="sessions" onOpen={goHabit}
           dots={dotGrid(trained, now)} count={weekSessionCount(sessions, now)} target={templateCount}
         />
       </div>

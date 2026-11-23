@@ -41,6 +41,8 @@ src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter 
 src/streak.test.ts  tests for it
 src/habits.ts       30-day dot grids and week counts for the Home habit cards
 src/habits.test.ts  tests for it
+src/monthTiles.ts    month list, per-month counts and summary text for the Home habit subpage
+src/monthTiles.test.ts tests for it
 src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none), plannedWeekdays()
 src/calendar.test.ts tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
@@ -53,7 +55,7 @@ src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
+src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
