@@ -4,17 +4,20 @@ interface Point {
   label: string;
 }
 
-export function LineChart({ points, unit }: { points: Point[]; unit: string }) {
-  if (points.length < 2) return <p className="muted small">Ab zwei Trainings gibt es hier eine Kurve.</p>;
+/** Ohne `line` ist `points` Linie und Punkte; mit `line` sind `points` nur Punkte und `line` die Linie. */
+export function LineChart({ points, unit, line, emptyText }: { points: Point[]; unit: string; line?: Point[]; emptyText?: string }) {
+  if (points.length < 2) return <p className="muted small">{emptyText ?? 'Ab zwei Trainings gibt es hier eine Kurve.'}</p>;
+  const path = line ?? points;
+  const all = line ? [...points, ...line] : points;
   const W = 340, H = 160, P = { l: 36, r: 10, t: 12, b: 22 };
-  const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+  const xs = all.map((p) => p.x), ys = all.map((p) => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   let y0 = Math.min(...ys), y1 = Math.max(...ys);
   if (y0 === y1) { y0 -= 1; y1 += 1; }
   const pad = (y1 - y0) * 0.1; y0 -= pad; y1 += pad;
   const sx = (x: number) => P.l + ((x - x0) / (x1 - x0 || 1)) * (W - P.l - P.r);
   const sy = (y: number) => H - P.b - ((y - y0) / (y1 - y0)) * (H - P.t - P.b);
-  const d = points.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ');
+  const d = path.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ');
   const ticks = [y0 + pad, (y0 + y1) / 2, y1 - pad];
   const fmt = (v: number) => (Math.round(v * 10) / 10).toLocaleString('de-DE');
   return (
