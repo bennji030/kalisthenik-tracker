@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getMeta, type Template } from '../db';
+import { streak } from '../streak';
 import { planTemplate, startSession, type Plan } from '../sessions';
 import { fmtDate, fmtKg, WEEKDAYS } from '../util';
 
@@ -32,6 +33,7 @@ export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void
     finished.filter((s) => s.templateId === t.id).sort((a, b) => b.startedAt - a.startedAt)[0];
 
   const backupDue = finished.length > 0 && (!lastBackup || Date.now() - lastBackup > 7 * 864e5);
+  const flames = streak(finished, templates.length, Date.now());
   const week = finished.filter((s) => Date.now() - s.startedAt < 7 * 864e5).length;
 
   const start = async () => {
@@ -45,6 +47,12 @@ export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void
   return (
     <div className="screen">
       <header className="home-head">
+        <div className={`streak ${flames > 0 ? '' : 'streak-zero'}`} aria-label={`${flames} Training${flames === 1 ? '' : 's'} in Folge`}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+            <path d="M12 2c1 3.5 4 5.5 4 9.500a4 4 0 0 1-1.500 3.100c.3-1.600-.2-3-1.500-4.100-.4 2-1.500 3-2.5 3.900C9 15.5 8 16.500 8 18a4 4 0 0 0 8 0h2a6 6 0 0 1-12 0c0-2.500 1.500-4 2.800-5.300C9.700 11.300 10.500 9 9 6c1.500.3 2.600-.5 3-4z" />
+          </svg>
+          <span>{flames}</span>
+        </div>
         <p className="muted small">{fmtDate(Date.now(), true)}</p>
         <h1>{todays.length ? 'Heute' : 'Kein Trainingstag'}</h1>
         <p className="muted small">{week} Training{week === 1 ? '' : 's'} in den letzten 7 Tagen</p>
