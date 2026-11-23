@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getMeta, saveWeight, setMeta, type WeightEntry } from '../db';
 import { dayKey, fmtDelta, fmtWeight, isValidKg, roundKg, weighPromptDue, weightSummary } from '../weight';
+import { weightTrend } from '../today';
+import { LineChart } from './LineChart';
 import { NumInput } from './NumInput';
 
 /** 7-Tage-Schnitt groß, darunter die Änderung zur Vorwoche (grün, wenn es runtergeht). */
@@ -46,6 +48,24 @@ export function WeighPrompt() {
         </button>
       </div>
       <button className="btn btn-ghost" onClick={() => setMeta('weighSkip', dayKey(Date.now()))}>Heute nicht</button>
+    </section>
+  );
+}
+
+/** Home-Karte: 7-Tage-Schnitt und Kurve der letzten 30 Tage; öffnet Verlauf → Gewicht. */
+export function WeightCard({ entries, onOpen }: { entries: WeightEntry[]; onOpen: () => void }) {
+  return (
+    <section className="habit habit-weight">
+      <div className="habit-title">Gewicht</div>
+      {entries.length ? (
+        <>
+          <WeightStats entries={entries} />
+          <LineChart points={weightTrend(entries, Date.now())} unit="kg" emptyText="Ab zwei Einträgen gibt es hier eine Kurve." />
+        </>
+      ) : (
+        <p className="muted small">Noch kein Gewicht, trag morgen früh dein erstes ein.</p>
+      )}
+      <button className="habit-hit" onClick={onOpen} aria-label="Gewicht, Verlauf öffnen" />
     </section>
   );
 }

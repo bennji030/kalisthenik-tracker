@@ -49,6 +49,8 @@ src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
 src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
+src/today.ts        Home cards: duration estimate, next training, 30-day weight trend
+src/today.test.ts   tests for it
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
 src/theme.ts         theme preference (dark/light/system), applyTheme()

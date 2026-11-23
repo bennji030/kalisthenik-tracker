@@ -277,11 +277,13 @@ select { width: 100%; appearance: none; }
 /* Gewohnheiten */
 .habits-head { margin: 8px 0 12px; }
 @media (max-width: 699px) {
-  .cards-habits { flex-direction: row; }
+  .cards-habits { flex-direction: row; flex-wrap: wrap; }
   .cards-habits > .habit { flex: 1 1 0; }
+  .cards-habits > .habit-weight { flex: 1 1 100%; }
 }
 .habit { position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 44px; padding: 14px; color: var(--text); background: var(--card); border-radius: var(--radius); }
 .habit-hit { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; background: transparent; border: 0; border-radius: inherit; }
+.habit-ok { color: var(--ok); }
 .habit-title { font-size: 17px; font-weight: 700; }
 .habit-dots { display: grid; grid-template-columns: repeat(10, 10px); justify-content: space-between; gap: 4px 0; width: 100%; margin: 8px 0; }
 .dot { display: block; width: 10px; height: 10px; border-radius: 3px; background: var(--tile-off); }
