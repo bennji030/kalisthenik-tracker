@@ -25,7 +25,7 @@ export function Home({ goTraining, goBackup, goHistory }: {
 
   return (
     <div className="screen">
-      <button className="home-head" onClick={goTraining}>
+      <section className="home-head">
         <div
           className={flames > 0 ? 'streak' : 'streak streak-zero'}
           role="img"
@@ -39,7 +39,8 @@ export function Home({ goTraining, goBackup, goHistory }: {
         <p className="muted small">{fmtDate(Date.now(), true)}</p>
         <h1>{todays.length ? todays.map((t) => t.name).join(' / ') : 'Kein Trainingstag'}</h1>
         <p className="muted small">{week} Training{week === 1 ? '' : 's'} in den letzten 7 Tagen</p>
-      </button>
+        <button className="home-hit" onClick={goTraining} aria-label="Zum Training" />
+      </section>
 
       <WeighPrompt />
 

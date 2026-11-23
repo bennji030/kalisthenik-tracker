@@ -5,7 +5,7 @@ interface Point {
 }
 
 /** Ohne `line` ist `points` Linie und Punkte; mit `line` sind `points` nur Punkte und `line` die Linie. */
-export function LineChart({ points, unit, line, emptyText }: { points: Point[]; unit: string; line?: Point[]; emptyText?: string }) {
+export function LineChart({ points, unit, line, legend, emptyText }: { points: Point[]; unit: string; line?: Point[]; legend?: { points: string; line: string }; emptyText?: string }) {
   if (points.length < 2) return <p className="muted small">{emptyText ?? 'Ab zwei Trainings gibt es hier eine Kurve.'}</p>;
   const path = line ?? points;
   const all = line ? [...points, ...line] : points;
@@ -21,6 +21,7 @@ export function LineChart({ points, unit, line, emptyText }: { points: Point[]; 
   const ticks = [y0 + pad, (y0 + y1) / 2, y1 - pad];
   const fmt = (v: number) => (Math.round(v * 10) / 10).toLocaleString('de-DE');
   return (
+    <>
     <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`Verlauf in ${unit}`}>
       {ticks.map((t, i) => (
         <g key={i}>
@@ -29,9 +30,16 @@ export function LineChart({ points, unit, line, emptyText }: { points: Point[]; 
         </g>
       ))}
       <path d={d} className="chart-line" />
-      {points.map((p, i) => <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={3.5} className="chart-dot" />)}
+      {points.map((p, i) => <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={3.5} className={line ? 'chart-dot chart-dot-muted' : 'chart-dot'} />)}
       <text x={P.l} y={H - 4} className="chart-tick">{points[0].label}</text>
       <text x={W - P.r} y={H - 4} textAnchor="end" className="chart-tick">{points[points.length - 1].label}</text>
     </svg>
+    {line && legend && (
+      <div className="chart-legend">
+        <span><i className="legend-dot" />{legend.points}</span>
+        <span><i className="legend-line" />{legend.line}</span>
+      </div>
+    )}
+    </>
   );
 }
