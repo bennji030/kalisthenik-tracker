@@ -5,6 +5,7 @@ import { LineChart } from '../components/LineChart';
 import { NumInput } from '../components/NumInput';
 import { WeightStats } from '../components/Weight';
 import { SessionLog } from '../components/SessionLog';
+import { cardioSummary, isCardioSession } from '../cardio';
 import { fmtDate, fmtShortDate, summarizeSets } from '../util';
 import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
@@ -42,18 +43,19 @@ function SessionCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> })
   const [open, setOpen] = useState(false);
   const [del, setDel] = useState(false);
   const mins = s.finishedAt ? Math.round((s.finishedAt - s.startedAt) / 60000) : 0;
+  const cardio = isCardioSession(s);
   return (
     <section className="card">
       <button className="card-toggle" onClick={() => setOpen(!open)}>
         <div>
           <h2>{s.templateName}</h2>
-          <p className="muted small">{fmtDate(s.startedAt, true)} · {mins} min</p>
+          <p className="muted small">{fmtDate(s.startedAt, true)} · {cardio ? cardioSummary(s) : `${mins} min`}</p>
         </div>
         <span className="muted">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
         <>
-          <SessionLog entries={s.entries} exMap={exMap} />
+          {!cardio && <SessionLog entries={s.entries} exMap={exMap} />}
           {!del ? (
             <button className="btn btn-small btn-ghost danger" onClick={() => setDel(true)}>Training löschen</button>
           ) : (

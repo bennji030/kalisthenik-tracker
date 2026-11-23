@@ -1,12 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
-import { dotGrid, sessionDayKeys, weekDayCount, weekSessionCount } from '../habits';
+import { dotGrid, lastDayKeys, sessionDayKeys, weekDayCount, weekSessionCount } from '../habits';
 import { WeightCard } from './Weight';
+import { cardioOnly, strengthOnly } from '../cardio';
 import type { HabitKind } from '../screens/HabitMonths';
 
 function HabitCard({ title, dots, count, target, tab, onOpen }: {
   title: string;
-  dots: boolean[];
+  dots: string[]; // CSS-Klasse je Punkt
   count: number;
   target: number;
   tab: HabitKind;
@@ -18,7 +19,7 @@ function HabitCard({ title, dots, count, target, tab, onOpen }: {
       <div className="habit-title">{title}</div>
       <div className="muted small">Letzte 30 Tage</div>
       <div className="habit-dots" aria-hidden="true">
-        {dots.map((on, i) => <span key={i} className={on ? 'dot dot-on' : 'dot'} />)}
+        {dots.map((c, i) => <span key={i} className={c} />)}
       </div>
       <div className="habit-bar" aria-hidden="true"><span style={{ width: `${fill * 100}%` }} /></div>
       <div className="habit-count" aria-hidden="true">
@@ -39,18 +40,22 @@ export function Habits({ templateCount, goHabit, goWeight }: { templateCount: nu
   if (!weights || !sessions) return null;
   const now = Date.now();
   const weighed = new Set(weights.map((w) => w.date));
-  const trained = sessionDayKeys(sessions);
+  // Cardio zählt nicht fürs Wochenziel; reine Cardio-Tage bekommen eigene Punkte.
+  const strength = strengthOnly(sessions);
+  const trained = sessionDayKeys(strength);
+  const cardio = sessionDayKeys(cardioOnly(sessions));
+  const trainDots = lastDayKeys(now).map((k) => (trained.has(k) ? 'dot dot-on' : cardio.has(k) ? 'dot dot-cardio' : 'dot'));
   return (
     <section>
       <h2 className="habits-head">Gewohnheiten</h2>
       <div className="cards cards-habits">
         <HabitCard
           title="Weigh-In" tab="weights" onOpen={goHabit}
-          dots={dotGrid(weighed, now)} count={weekDayCount(weighed, now)} target={7}
+          dots={dotGrid(weighed, now).map((on) => (on ? 'dot dot-on' : 'dot'))} count={weekDayCount(weighed, now)} target={7}
         />
         <HabitCard
           title="Trainings" tab="sessions" onOpen={goHabit}
-          dots={dotGrid(trained, now)} count={weekSessionCount(sessions, now)} target={templateCount}
+          dots={trainDots} count={weekSessionCount(strength, now)} target={templateCount}
         />
         <WeightCard entries={weights} onOpen={goWeight} />
       </div>

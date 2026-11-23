@@ -16,6 +16,9 @@
   --on-accent: #111;
   --on-ok: #0b2117;
   --on-warn: #2b1d00;
+  --cardio: #4fb3ff;
+  --cardio-soft: rgba(79, 179, 255, 0.14);
+  --on-cardio: #04223a;
   --raised: #262a32;
   --bar-bg: rgba(14, 15, 18, 0.92);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -44,6 +47,9 @@
   --on-accent: #ffffff;
   --on-ok: #ffffff;
   --on-warn: #ffffff;
+  --cardio: #0b6bb8;
+  --cardio-soft: rgba(11, 107, 184, 0.12);
+  --on-cardio: #ffffff;
   --raised: #ffffff;
   --bar-bg: rgba(242, 242, 247, 0.92);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.18);
@@ -245,6 +251,10 @@ p { margin: 0; }
 .field .num { font-size: 16px; }
 select { width: 100%; appearance: none; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cardio-check { display: flex; flex-direction: column; gap: 10px; }
+.cardio-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
+.cardio-fields input { width: 100%; }
+.plan-add { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .toggle { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .toggle input { width: 20px; height: 20px; accent-color: var(--accent); }
 .lib-new { display: flex; flex-direction: column; gap: 8px; }
@@ -290,6 +300,7 @@ select { width: 100%; appearance: none; }
 .habit-dots { display: grid; grid-template-columns: repeat(10, 10px); justify-content: space-between; gap: 4px 0; width: 100%; margin: 8px 0; }
 .dot { display: block; width: 10px; height: 10px; border-radius: 3px; background: var(--tile-off); }
 .dot-on { background: var(--accent); }
+.dot-cardio { background: var(--cardio); }
 .habit-bar { display: block; width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 4px; }
 .habit-count { display: block; }
 .habit-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -302,6 +313,7 @@ select { width: 100%; appearance: none; }
 .month-tiles .cal-row { gap: 4px; }
 .tile { display: block; aspect-ratio: 1; border-radius: 3px; background: var(--tile-off); }
 .tile-on { background: var(--accent); }
+.tile-cardio { background: var(--cardio); }
 .tile-future { background: none; border: 1px dashed var(--tile-off); opacity: 0.6; }
 
 /* Keyboard focus */
@@ -329,10 +341,12 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }
 .day-done { background: var(--accent); color: var(--on-accent); }
 .day-open { background: var(--accent-soft); color: var(--accent); }
+.day-cardio { background: var(--cardio); color: var(--on-cardio); }
+.day-cardio-open { background: var(--cardio-soft); color: var(--cardio); }
 .day-missed { color: var(--muted); }
 .day-today { font-weight: 800; box-shadow: inset 0 0 0 2px var(--text); }
 .day-sel { border-color: var(--accent); border-style: dashed; }
-.day-done.day-sel { border-color: var(--text); }
+.day-done.day-sel, .day-cardio.day-sel { border-color: var(--text); }
 @media (prefers-reduced-motion: reduce) {
   .cal-month, .cal-week { animation: none; }
   .cal-toggle svg { transition: none; }

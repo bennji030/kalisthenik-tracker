@@ -6,9 +6,11 @@ import { estimateMinutes, nextTraining } from '../today';
 import { dayKey } from '../weight';
 import { parseProfile } from '../profile';
 import { streak } from '../streak';
+import { cardioSummary, isCardio, isCardioSession, strengthOnly } from '../cardio';
 import { fmtDate } from '../util';
 import { WeighPrompt } from '../components/Weight';
 import { Habits } from '../components/Habits';
+import { CardioCheck } from '../components/CardioCheck';
 import type { HabitKind } from './HabitMonths';
 
 function TodayCard({ templates, sessions, openWorkout }: {
@@ -36,7 +38,9 @@ function TodayCard({ templates, sessions, openWorkout }: {
       <section className="card">
         <h2 className="habit-ok">Erledigt ✓</h2>
         {doneToday.map((s) => (
-          <p key={s.id} className="muted small">{s.templateName} · {Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000)} min</p>
+          <p key={s.id} className="muted small">
+            {s.templateName} · {isCardioSession(s) ? cardioSummary(s) : `${Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000)} min`}
+          </p>
         ))}
       </section>
     );
@@ -54,6 +58,7 @@ function TodayCard({ templates, sessions, openWorkout }: {
     return (
       <section className="card">
         {todays.map((t) => {
+          if (isCardio(t)) return <CardioCheck key={t.id} template={t} />;
           const m = estimateMinutes(t.slots);
           return (
             <div key={t.id}>
@@ -92,9 +97,12 @@ export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }:
 
   const finished = sessions.filter((s) => s.finishedAt);
   const backupDue = finished.length > 0 && (!lastBackup || Date.now() - lastBackup > 7 * 864e5);
-  const flames = streak(finished, templates.length, Date.now());
+  // Cardio zählt extra: Flammen, 7-Tage-Zeile und Wochenziel nur mit Krafttagen.
+  const strength = strengthOnly(finished);
+  const strengthTemplates = strengthOnly(templates).length;
+  const flames = streak(strength, strengthTemplates, Date.now());
   const now = Date.now();
-  const week = finished.filter((s) => s.startedAt <= now && now - s.startedAt < 7 * 864e5).length;
+  const week = strength.filter((s) => s.startedAt <= now && now - s.startedAt < 7 * 864e5).length;
 
   return (
     <div className="screen">
@@ -134,7 +142,7 @@ export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }:
         </button>
       )}
 
-      <Habits templateCount={templates.length} goHabit={goHabit} goWeight={goWeight} />
+      <Habits templateCount={strengthTemplates} goHabit={goHabit} goWeight={goWeight} />
     </div>
   );
 }

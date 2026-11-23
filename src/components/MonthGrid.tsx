@@ -3,7 +3,10 @@ import { WEEKDAYS } from '../util';
 import { dayTs } from '../weight';
 
 const HEAD = [1, 2, 3, 4, 5, 6, 0].map((d) => WEEKDAYS[d]);
-const LABEL: Record<DayStatus, string> = { done: ', erledigt', open: ', geplant', missed: ', verpasst', none: '' };
+const LABEL: Record<DayStatus, string> = {
+  done: ', erledigt', open: ', geplant', missed: ', verpasst', none: '',
+  cardio: ', Cardio erledigt', 'cardio-open': ', Cardio geplant',
+};
 
 export function DayCell({ dayKey, status, today, selected, onSelect }: {
   dayKey: string;
