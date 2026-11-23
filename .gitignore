@@ -3,3 +3,4 @@ dist
 *.local
 /factory/jobs/
 .claude/settings.local.json
+*.tsbuildinfo
