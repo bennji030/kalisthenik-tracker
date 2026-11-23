@@ -6,6 +6,7 @@ import { fmtDate } from '../util';
 import { dayKey, dayTs, fmtWeight, weightSummary } from '../weight';
 import { ageOn, isValidBirthDate, isValidBodyFat, isValidHeight, parseProfile, type Gender, type Profile } from '../profile';
 import type { HistoryTab } from './History';
+import { parseThemePref, type ThemePref } from '../theme';
 import { BackupSection } from './BackupSection';
 
 export function Settings({ toast, onBack, goHistory }: {
@@ -21,6 +22,7 @@ export function Settings({ toast, onBack, goHistory }: {
         <button className="btn btn-ghost" onClick={onBack}>Zurück</button>
       </header>
       {stored && <ProfileCard profile={parseProfile(stored.value, Date.now())} goHistory={goHistory} />}
+      <ThemeCard />
       <BackupSection toast={toast} />
     </div>
   );
@@ -123,6 +125,27 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
             <span>Noch kein Gewicht eingetragen</span>
           )}
           <button className="btn btn-ghost" onClick={() => goHistory('weights')}>Verlauf → Gewicht</button>
+        </div>
+      </section>
+    </>
+  );
+}
+
+const THEMES: [ThemePref, string][] = [['dark', 'Dunkel'], ['light', 'Hell'], ['system', 'Wie System']];
+
+function ThemeCard() {
+  const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('theme', undefined) }), []);
+  const current = parseThemePref(stored?.value);
+  return (
+    <>
+      <h1 className="mt">Darstellung</h1>
+      <section className="card readable">
+        <div className="seg seg-tall">
+          {THEMES.map(([pref, label]) => (
+            <button key={pref} className={current === pref ? 'on' : ''} aria-pressed={current === pref} onClick={() => void setMeta('theme', pref)}>
+              {label}
+            </button>
+          ))}
         </div>
       </section>
     </>

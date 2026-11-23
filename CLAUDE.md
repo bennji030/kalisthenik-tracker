@@ -51,6 +51,7 @@ src/backup.ts        JSON export (iOS share sheet) and import
 src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
+src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; Settings opens from the gear on Home
@@ -93,6 +94,11 @@ Dark, calm, iOS-like: system font, cards on `--bg`, one accent `--accent`
 (44px+), numeric keypads (`inputMode`), safe-area insets, tabular numbers.
 Use the tokens on `:root` in `styles.css`; no hard-coded colours. The app is
 used mid-workout on a phone: fewest taps wins.
+
+There is a light token set under `:root[data-theme="light"]`; every colour token
+must be defined in both sets, and no colour literals live outside them. The theme
+preference is the `meta` key `theme` (`dark`/`light`/`system`), cached in
+localStorage for the pre-paint script in `index.html`.
 
 The layout is phone-first with one breakpoint at `min-width: 700px` (nav on top,
 grids, max width 1200px); lists of cards are wrapped in `.cards` to become a grid

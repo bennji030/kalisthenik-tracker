@@ -10,6 +10,20 @@
     <meta name="apple-mobile-web-app-title" content="Calisthenics" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <script>
+      (function () {
+        var t = 'dark';
+        try {
+          var v = localStorage.getItem('theme');
+          if (v === 'light') t = 'light';
+          else if (v === 'system' && matchMedia('(prefers-color-scheme: light)').matches) t = 'light';
+        } catch (e) {}
+        var light = t === 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', light ? '#f2f2f7' : '#0e0f12');
+        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute('content', light ? 'default' : 'black-translucent');
+      })();
+    </script>
     <title>Calisthenics</title>
   </head>
   <body>
