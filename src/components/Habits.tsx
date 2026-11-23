@@ -13,19 +13,22 @@ function HabitCard({ title, dots, count, target, tab, onOpen }: {
 }) {
   const fill = target > 0 ? Math.min(count / target, 1) : 0;
   return (
-    <button
-      className="habit"
-      onClick={() => onOpen(tab)}
-      aria-label={`${title}, ${count} von ${target} diese Woche, ${tab === 'weights' ? 'Gewicht' : 'Trainings'} öffnen`}
-    >
-      <span className="habit-title">{title}</span>
-      <span className="muted small">Letzte 30 Tage</span>
-      <span className="habit-dots" aria-hidden="true">
+    <section className="habit">
+      <div className="habit-title">{title}</div>
+      <div className="muted small">Letzte 30 Tage</div>
+      <div className="habit-dots" aria-hidden="true">
         {dots.map((on, i) => <span key={i} className={on ? 'dot dot-on' : 'dot'} />)}
-      </span>
-      <span className="habit-bar" aria-hidden="true"><span style={{ width: `${fill * 100}%` }} /></span>
-      <span className="muted small">{count}/{target} diese Woche</span>
-    </button>
+      </div>
+      <div className="habit-bar" aria-hidden="true"><span style={{ width: `${fill * 100}%` }} /></div>
+      <div className="habit-count" aria-hidden="true">
+        <span className="habit-num">{count}/{target}</span> <span className="muted small">diese Woche</span>
+      </div>
+      <button
+        className="habit-hit"
+        onClick={() => onOpen(tab)}
+        aria-label={`${title}, ${count} von ${target} diese Woche, ${tab === 'weights' ? 'Gewicht' : 'Trainings'} öffnen`}
+      />
+    </section>
   );
 }
 

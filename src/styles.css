@@ -227,12 +227,15 @@ select { width: 100%; appearance: none; }
   .cards-habits { flex-direction: row; }
   .cards-habits > .habit { flex: 1 1 0; }
 }
-.habit { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 44px; padding: 14px; text-align: left; color: var(--text); background: var(--card); border: 0; border-radius: var(--radius); }
+.habit { position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 44px; padding: 14px; color: var(--text); background: var(--card); border-radius: var(--radius); }
+.habit-hit { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; background: transparent; border: 0; border-radius: inherit; }
 .habit-title { font-size: 17px; font-weight: 700; }
-.habit-dots { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin: 8px 0; }
-.dot { aspect-ratio: 1; border-radius: 50%; background: var(--line); }
+.habit-dots { display: grid; grid-template-columns: repeat(10, 10px); justify-content: space-between; gap: 4px 0; width: 100%; margin: 8px 0; }
+.dot { display: block; width: 10px; height: 10px; border-radius: 3px; background: var(--line); }
 .dot-on { background: var(--accent); }
-.habit-bar { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 4px; }
+.habit-bar { display: block; width: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 4px; }
+.habit-count { display: block; }
+.habit-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .habit-bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.25s ease; }
 
 /* Keyboard focus */
