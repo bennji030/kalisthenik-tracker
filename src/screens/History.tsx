@@ -138,12 +138,13 @@ function WeightHistory() {
   const label = (date: string) => fmtShortDate(dayTs(date));
   return (
     <>
-      <section className="card">
+      <section className="card readable">
         <WeightStats entries={weights} />
         <LineChart
           unit="kg"
           points={rolling.map((r) => ({ x: dayTs(r.date), y: r.kg, label: label(r.date) }))}
           line={rolling.map((r) => ({ x: dayTs(r.date), y: r.avg, label: label(r.date) }))}
+          legend={{ points: 'Tageswert', line: '7-Tage-Schnitt' }}
           emptyText="Ab zwei Einträgen gibt es hier eine Kurve."
         />
       </section>
