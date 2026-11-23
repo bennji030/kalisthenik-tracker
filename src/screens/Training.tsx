@@ -102,7 +102,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
       <div className="cal">
         <div className="cal-bar">
           {expanded && <button className="cal-btn" aria-label="Vorheriger Monat" onClick={() => shift(-1)}>‹</button>}
-          <h1>{expanded ? fmtMonth(view.y, view.m) : fmtLongDate(dayTs(selectedDay))}</h1>
+          <h1 className={expanded ? 'cal-title-month' : undefined}>{expanded ? fmtMonth(view.y, view.m) : fmtLongDate(dayTs(selectedDay))}</h1>
           {expanded && <button className="cal-btn" aria-label="Nächster Monat" onClick={() => shift(1)}>›</button>}
           <button
             className={`cal-btn cal-toggle${expanded ? ' open' : ''}`}
@@ -118,7 +118,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
         {expanded ? (
           <MonthGrid year={view.y} month={view.m} todayKey={todayKey} selectedKey={selectedDay} statusOf={statusOf} onSelect={pick} />
         ) : (
-          <div>
+          <div className="cal-week">
             <DayHeader />
             <div className="cal-row">
               {weekKeys(selectedDay).map((k) => (
