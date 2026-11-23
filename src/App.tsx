@@ -6,7 +6,7 @@ import { Training } from './screens/Training';
 import { Workout } from './screens/Workout';
 import { History, type HistoryTab } from './screens/History';
 import { PlanScreen } from './screens/PlanEditor';
-
+import { Settings } from './screens/Settings';
 
 type Tab = 'home' | 'training' | 'history' | 'plan';
 
@@ -21,7 +21,7 @@ export function App() {
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [historyTab, setHistoryTab] = useState<HistoryTab>('sessions');
-  const [scrollToBackup, setScrollToBackup] = useState(false);
+  const [settings, setSettings] = useState(false);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -43,21 +43,26 @@ export function App() {
 
   if (!ready) return null;
 
-  const go = (t: Tab) => { setWorkoutId(null); setScrollToBackup(false); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
+  const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
+
+  const openSettings = () => { setSettings(true); window.scrollTo(0, 0); };
+  const goHistory = (t: HistoryTab) => { go('history'); setHistoryTab(t); };
 
   return (
     <>
       <main>
         {workoutId ? (
           <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
+        ) : settings ? (
+          <Settings toast={toast} onBack={() => go('home')} goHistory={goHistory} />
         ) : tab === 'home' ? (
-          <Home goTraining={() => go('training')} goBackup={() => { go('plan'); setScrollToBackup(true); }} goHistory={(t) => { go('history'); setHistoryTab(t); }} />
+          <Home goTraining={() => go('training')} goSettings={openSettings} goHistory={goHistory} />
         ) : tab === 'training' ? (
           <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
         ) : tab === 'history' ? (
           <History initialTab={historyTab} />
         ) : tab === 'plan' ? (
-          <PlanScreen toast={toast} scrollToBackup={scrollToBackup} />
+          <PlanScreen />
         ) : null}
       </main>
       {!workoutId && (
