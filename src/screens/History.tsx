@@ -4,7 +4,7 @@ import { db, saveWeight, type Exercise, type Session } from '../db';
 import { LineChart } from '../components/LineChart';
 import { NumInput } from '../components/NumInput';
 import { WeightStats } from '../components/Weight';
-import { entrySucceeded } from '../progression';
+import { SessionLog } from '../components/SessionLog';
 import { fmtDate, fmtShortDate, summarizeSets } from '../util';
 import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
@@ -53,18 +53,7 @@ function SessionCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> })
       </button>
       {open && (
         <>
-          <ul className="log">
-            {s.entries.filter((e) => e.sets.some((x) => x.done)).map((e) => {
-              const ex = exMap.get(e.exerciseId);
-              const judged = e.kind !== 'free';
-              return (
-                <li key={e.slotId}>
-                  <span>{judged ? (entrySucceeded(e) ? '✅' : '⚠️') : '·'} {ex?.name ?? '?'}</span>
-                  <span className="muted">{summarizeSets(e.sets.filter((x) => x.done), ex?.type ?? 'reps')}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <SessionLog entries={s.entries} exMap={exMap} />
           {!del ? (
             <button className="btn btn-small btn-ghost danger" onClick={() => setDel(true)}>Training löschen</button>
           ) : (

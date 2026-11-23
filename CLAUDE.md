@@ -41,6 +41,8 @@ src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter 
 src/streak.test.ts  tests for it
 src/habits.ts       30-day dot grids and week counts for the Home habit cards
 src/habits.test.ts  tests for it
+src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none), plannedWeekdays()
+src/calendar.test.ts tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
@@ -49,8 +51,8 @@ src/weight.ts        body weight: day keys, 7-entry rolling average, summary, ba
 src/weight.test.ts   tests for it
 src/util.ts          formatting helpers (German number/date format)
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast
-src/screens/         Home (overview + weigh-in prompt), Training, Workout, History, PlanEditor (incl. Daten & Backup), BackupSection
-src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats)
+src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, History, PlanEditor (incl. Daten & Backup), BackupSection
+src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
 ```
@@ -59,6 +61,7 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
 
 ## Domain
 
+- Calendar (Training tab): per day `done` = a finished session started that local day (an unplanned training counts too; running sessions never), `open` = planned weekday, not done, today or later, `missed` = planned weekday, not done, in the past, `none` = anything else.
 - Week: Mo Pull A (heavy), Di Push A (heavy), Do Pull B (light), Fr Push B
   (light). Wednesday is a HIIT day, not tracked yet.
 - Exercise types: `weighted` (reps + added kg), `reps` (bodyweight), `hold`
