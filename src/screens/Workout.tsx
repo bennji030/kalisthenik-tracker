@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
+import { db, getMeta, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, unlockAudio } from '../components/RestTimer';
+import { entryNoon, entryTimes } from '../entryDay';
 import { entrySucceeded } from '../progression';
-import { fmtAddedKg, fmtKg } from '../util';
+import { ENTRY_DAY_KEY, type EntryDay } from '../sessions';
+import { fmtAddedKg, fmtDate, fmtKg } from '../util';
 
 const KIND_CLASS: Record<string, string> = {
   'up-reps': 'pill-up', 'up-weight': 'pill-up', first: 'pill-neutral', repeat: 'pill-warn',
@@ -32,6 +34,8 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const [confirm, setConfirm] = useState<null | 'finish' | 'discard'>(null);
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
+  const entry = useLiveQuery(() => getMeta<EntryDay | null>(ENTRY_DAY_KEY, null), []);
+  const entryDay = entry?.sessionId === sessionId ? entry.day : null;
   const first = useRef(true);
 
   useEffect(() => {
@@ -101,15 +105,27 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const mins = Math.round((Date.now() - session.startedAt) / 60000);
 
   const finish = async () => {
-    const s = { ...session, finishedAt: Date.now() };
-    await db.sessions.put(s);
+    const now = Date.now();
+    let s: Session = { ...session, finishedAt: now };
+    await db.transaction('rw', db.sessions, db.meta, async () => {
+      const e = await getMeta<EntryDay | null>(ENTRY_DAY_KEY, null);
+      if (e?.sessionId === session.id) {
+        s = { ...session, ...entryTimes(e.day, session.startedAt, now) };
+        await db.meta.delete(ENTRY_DAY_KEY);
+      }
+      await db.sessions.put(s);
+    });
     setRestTimer(null);
     const hits = s.entries.filter((e) => e.kind !== 'free' && entrySucceeded(e)).length;
     const judged = s.entries.filter((e) => e.kind !== 'free').length;
     onClose(`Gespeichert · ${hits}/${judged} Ziele geschafft 💪`);
   };
   const discard = async () => {
-    await db.sessions.delete(session.id);
+    await db.transaction('rw', db.sessions, db.meta, async () => {
+      const e = await getMeta<EntryDay | null>(ENTRY_DAY_KEY, null);
+      if (e?.sessionId === session.id) await db.meta.delete(ENTRY_DAY_KEY);
+      await db.sessions.delete(session.id);
+    });
     setRestTimer(null);
     onClose('Training verworfen');
   };
@@ -119,6 +135,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
       <header className="wo-head">
         <div>
           <h1>{session.templateName}</h1>
+          {entryDay && <p className="muted small">für {fmtDate(entryNoon(entryDay), true)}</p>}
           <p className="muted small">{doneSets}/{totalSets} Sätze · {mins} min</p>
         </div>
         <button className="btn btn-ghost" onClick={() => onClose()}>Zurück</button>
