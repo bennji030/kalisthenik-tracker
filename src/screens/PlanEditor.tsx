@@ -1,21 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type ExType, type Slot, type Template } from '../db';
 import { NumInput } from '../components/NumInput';
 import { uid, WEEKDAYS } from '../util';
-import { BackupSection } from './BackupSection';
 
 const TYPE_LABEL: Record<ExType, string> = { weighted: 'Wdh. + Gewicht', reps: 'Wdh.', hold: 'Haltezeit' };
 
-export function PlanScreen({ toast, scrollToBackup }: { toast: (m: string) => void; scrollToBackup: boolean }) {
+export function PlanScreen() {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const [editing, setEditing] = useState<Template | null>(null);
   const [showLib, setShowLib] = useState(false);
-  const ready = !!templates && !!exercises;
-  useEffect(() => {
-    if (scrollToBackup && ready) document.getElementById('backup')?.scrollIntoView();
-  }, [scrollToBackup, ready]);
   if (!templates || !exercises) return <div className="screen" />;
   const exMap = new Map(exercises.map((e) => [e.id, e]));
 
@@ -54,8 +49,6 @@ export function PlanScreen({ toast, scrollToBackup }: { toast: (m: string) => vo
       <h1 className="mt">Übungen</h1>
       <button className="btn" onClick={() => setShowLib(!showLib)}>{showLib ? 'Übungsliste schließen' : 'Übungsliste bearbeiten'}</button>
       {showLib && <ExerciseLibrary exercises={exercises} templates={templates} />}
-
-      <BackupSection toast={toast} />
     </div>
   );
 }

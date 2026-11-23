@@ -52,8 +52,9 @@ src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
 src/util.ts          formatting helpers (German number/date format)
-src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast
-src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor (incl. Daten & Backup), BackupSection
+src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
+src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; Settings opens from the gear on Home
+src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
