@@ -4,12 +4,12 @@ import { streak } from '../streak';
 import { fmtDate } from '../util';
 import { WeighPrompt } from '../components/Weight';
 import { Habits } from '../components/Habits';
-import type { HistoryTab } from './History';
+import type { HabitKind } from './HabitMonths';
 
-export function Home({ goTraining, goBackup, goHistory }: {
+export function Home({ goTraining, goBackup, goHabit }: {
   goTraining: () => void;
   goBackup: () => void;
-  goHistory: (tab: HistoryTab) => void;
+  goHabit: (kind: HabitKind) => void;
 }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
@@ -50,7 +50,7 @@ export function Home({ goTraining, goBackup, goHistory }: {
         </button>
       )}
 
-      <Habits templateCount={templates.length} goHistory={goHistory} />
+      <Habits templateCount={templates.length} goHabit={goHabit} />
     </div>
   );
 }
