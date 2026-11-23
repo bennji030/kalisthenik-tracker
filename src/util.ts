@@ -56,3 +56,13 @@ export function summarizeSets(sets: Pick<SetLog, 'reps' | 'weight' | 'sec'>[], t
 function allSame<T>(a: T[]): boolean {
   return a.every((x) => x === a[0]);
 }
+
+/** z. B. "23. Nov. 2026" */
+export function fmtLongDate(ts: number): string {
+  return new Date(ts).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** z. B. "November 2026" */
+export function fmtMonth(year: number, month: number): string {
+  return new Date(year, month, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+}
