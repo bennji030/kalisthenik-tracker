@@ -18,10 +18,14 @@ const EX: Record<string, Omit<Exercise, 'id'>> = {
 
 type SlotDef = [key: keyof typeof EX, sets: number, repMin: number, repMax: number, restSec: number, progression?: boolean, startWeight?: number];
 
-export async function seedIfEmpty() {
-  if (await getMeta('seeded', false)) return;
-  if ((await db.templates.count()) > 0) return;
+/** Storage used by seed(); transaction() must run its callbacks one at a time. */
+export interface SeedStore {
+  transaction(fn: () => Promise<void>): Promise<void>;
+  isSeeded(): Promise<boolean>;
+  write(exercises: Exercise[], templates: Template[]): Promise<void>;
+}
 
+function buildPlan() {
   const ids: Record<string, string> = {};
   const exercises: Exercise[] = Object.entries(EX).map(([k, e]) => {
     ids[k] = uid();
@@ -77,9 +81,28 @@ export async function seedIfEmpty() {
     },
   ];
 
-  await db.transaction('rw', db.exercises, db.templates, db.meta, async () => {
+  return { exercises, templates };
+}
+
+/** Check and write in one transaction, so overlapping calls cannot both seed. */
+export function seed(store: SeedStore): Promise<void> {
+  return store.transaction(async () => {
+    if (await store.isSeeded()) return;
+    const { exercises, templates } = buildPlan();
+    await store.write(exercises, templates);
+  });
+}
+
+const dbStore: SeedStore = {
+  transaction: (fn) => db.transaction('rw', db.exercises, db.templates, db.meta, fn),
+  isSeeded: async () => (await getMeta('seeded', false)) || (await db.templates.count()) > 0,
+  write: async (exercises, templates) => {
     await db.exercises.bulkAdd(exercises);
     await db.templates.bulkAdd(templates);
     await setMeta('seeded', true);
-  });
+  },
+};
+
+export function seedIfEmpty(): Promise<void> {
+  return seed(dbStore);
 }
