@@ -23,6 +23,7 @@ export function PlanScreen() {
     <div className="screen">
       <h1>Plan</h1>
       <p className="muted small">Änderungen gelten ab dem nächsten Training. Der Verlauf bleibt erhalten.</p>
+      <div className="cards">
       {templates.map((t) => (
         <section key={t.id} className="card">
           <button className="card-toggle" onClick={() => setEditing(structuredClone(t))}>
@@ -42,6 +43,7 @@ export function PlanScreen() {
           </ul>
         </section>
       ))}
+      </div>
       <button className="btn" onClick={addTemplate}>+ Trainingstag</button>
 
       <h1 className="mt">Übungen</h1>
@@ -107,6 +109,7 @@ function TemplateEditor({ initial, exercises, onClose }: { initial: Template; ex
         </div>
       </div>
 
+      <div className="cards">
       {t.slots.map((s, i) => {
         const ex = exMap.get(s.exerciseId);
         const judged = s.progression && ex?.type !== 'hold';
@@ -147,6 +150,7 @@ function TemplateEditor({ initial, exercises, onClose }: { initial: Template; ex
           </section>
         );
       })}
+      </div>
       <button className="btn" onClick={addSlot}>+ Übung</button>
 
       <div className="wo-actions">
@@ -180,7 +184,7 @@ function ExerciseLibrary({ exercises, templates }: { exercises: Exercise[]; temp
   };
 
   return (
-    <section className="card">
+    <section className="card readable">
       <div className="lib-new">
         <input placeholder="Neue Übung, z. B. Muscle-up Negatives" value={name} onChange={(e) => setName(e.target.value)} />
         <select value={type} onChange={(e) => setType(e.target.value as ExType)}>

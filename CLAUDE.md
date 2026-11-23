@@ -72,6 +72,10 @@ Dark, calm, iOS-like: system font, cards on `--bg`, one accent `--accent`
 Use the tokens on `:root` in `styles.css`; no hard-coded colours. The app is
 used mid-workout on a phone: fewest taps wins.
 
+The layout is phone-first with one breakpoint at `min-width: 700px` (nav on top,
+grids, max width 1200px); lists of cards are wrapped in `.cards` to become a grid
+on wide screens. Hover styles only inside `(hover: hover) and (pointer: fine)`.
+
 ## Design skills
 
 `.claude/skills/` holds four skills by Emil Kowalski (MIT). Agents that build or

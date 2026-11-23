@@ -24,7 +24,7 @@ export function History() {
       </div>
       {sessions.length === 0 && <p className="muted">Noch keine abgeschlossenen Trainings.</p>}
       {tab === 'sessions'
-        ? sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)
+        ? <div className="cards">{sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)}</div>
         : <ExerciseList sessions={sessions} exercises={exercises} />}
     </div>
   );
