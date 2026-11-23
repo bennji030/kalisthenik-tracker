@@ -43,9 +43,11 @@ src/habits.ts       30-day dot grids and week counts for the Home habit cards
 src/habits.test.ts  tests for it
 src/monthTiles.ts    month list, per-month counts and summary text for the Home habit subpage
 src/monthTiles.test.ts tests for it
-src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none), plannedWeekdays()
+src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none/cardio/cardio-open), plannedWeekdays()
 src/calendar.test.ts tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
+src/cardio.ts        cardio day: strength/cardio filters, cardioSummary(), logCardio(), one-time ensureCardioDay() (meta flag `cardioDay`)
+src/cardio.test.ts   tests for it
 src/entryDay.ts      entering a training for another day: entryNoon(), defaultTemplate(), entryTimes()
 src/entryDay.test.ts tests for it
 src/seed.ts          default exercises and the 4 training days (first start only)
@@ -60,7 +62,7 @@ src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; Settings opens from the gear on Home
 src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
-src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training)
+src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
 ```
@@ -69,9 +71,16 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
 
 ## Domain
 
-- Calendar (Training tab): per day `done` = a finished session started that local day (an unplanned training counts too; running sessions never), `open` = planned weekday, not done, today or later, `missed` = planned weekday, not done, in the past, `none` = anything else.
+- Calendar (Training tab): per day `done` = a finished session started that local day (an unplanned training counts too; running sessions never), `open` = planned weekday, not done, today or later, `missed` = planned weekday, not done, in the past, `none` = anything else. Strength days win over cardio: `cardio` = only cardio done that day, `cardio-open` = only cardio planned, today or later.
 - Week: Mo Pull A (heavy), Di Push A (heavy), Do Pull B (light), Fr Push B
-  (light). Wednesday is a HIIT day, not tracked yet.
+  (light). Wednesday is the cardio day: a template with `kind: 'cardio'` and no
+  slots, checked off with one tap (optional minutes and note). A cardio entry is a
+  finished `Session` with `kind: 'cardio'` and no entries. Cardio counts extra: it
+  is not part of the weekly goal, the flames, the 7-day line or the month count,
+  and has its own colour (`--cardio`). Templates and sessions without `kind` are
+  strength. The Cardio day is added once (also on fresh installs) behind the meta
+  flag `cardioDay`; importing a backup sets the flag, so a deleted Cardio day stays
+  deleted.
 - Exercise types: `weighted` (reps + added kg), `reps` (bodyweight), `hold`
   (seconds). A slot is an exercise inside a day with its own sets, rep range,
   increment, start weight, rest time and a `progression` flag. Skill work
