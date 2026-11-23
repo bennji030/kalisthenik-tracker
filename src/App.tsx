@@ -2,24 +2,26 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { seedIfEmpty } from './seed';
 import { activeSession } from './sessions';
 import { Home } from './screens/Home';
+import { Training } from './screens/Training';
 import { Workout } from './screens/Workout';
 import { History, type HistoryTab } from './screens/History';
 import { PlanScreen } from './screens/PlanEditor';
-import { More } from './screens/More';
 
-type Tab = 'home' | 'history' | 'plan' | 'more';
+
+type Tab = 'home' | 'training' | 'history' | 'plan';
 
 const ICONS: Record<Tab, ReactNode> = {
-  home: <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />,
+  home: <path d="M4 11.5 12 5l8 6.5M6 10v9h12v-9M10 19v-5h4v5" />,
+  training: <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />,
   history: <path d="M4 19h16M5 15l4-5 4 3 6-7" />,
   plan: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
-  more: <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14" />,
 };
 
 export function App() {
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [historyTab, setHistoryTab] = useState<HistoryTab>('sessions');
+  const [scrollToBackup, setScrollToBackup] = useState(false);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export function App() {
 
   if (!ready) return null;
 
-  const go = (t: Tab) => { setWorkoutId(null); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
+  const go = (t: Tab) => { setWorkoutId(null); setScrollToBackup(false); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
 
   return (
     <>
@@ -49,18 +51,18 @@ export function App() {
         {workoutId ? (
           <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
         ) : tab === 'home' ? (
-          <Home onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goBackup={() => go('more')} goHistory={(t) => { go('history'); setHistoryTab(t); }} />
+          <Home goTraining={() => go('training')} goBackup={() => { go('plan'); setScrollToBackup(true); }} goHistory={(t) => { go('history'); setHistoryTab(t); }} />
+        ) : tab === 'training' ? (
+          <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
         ) : tab === 'history' ? (
           <History initialTab={historyTab} />
         ) : tab === 'plan' ? (
-          <PlanScreen />
-        ) : (
-          <More toast={toast} />
-        )}
+          <PlanScreen toast={toast} scrollToBackup={scrollToBackup} />
+        ) : null}
       </main>
       {!workoutId && (
         <nav className="tabbar">
-          {([['home', 'Training'], ['history', 'Verlauf'], ['plan', 'Plan'], ['more', 'Backup']] as const).map(([t, label]) => (
+          {([['home', 'Home'], ['training', 'Training'], ['history', 'Verlauf'], ['plan', 'Plan']] as const).map(([t, label]) => (
             <button key={t} className={tab === t ? 'on' : ''} onClick={() => go(t)}>
               <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true">{ICONS[t]}</svg>
               <span>{label}</span>

@@ -4,7 +4,7 @@ import { db, getMeta } from '../db';
 import { exportBackup, importBackup } from '../backup';
 import { fmtDate } from '../util';
 
-export function More({ toast }: { toast: (m: string) => void }) {
+export function BackupSection({ toast }: { toast: (m: string) => void }) {
   const lastBackup = useLiveQuery(() => getMeta<number | null>('lastBackup', null), []);
   const count = useLiveQuery(() => db.sessions.count(), []);
   const [persisted, setPersisted] = useState<boolean | null>(null);
@@ -32,13 +32,13 @@ export function More({ toast }: { toast: (m: string) => void }) {
   };
 
   return (
-    <div className="screen">
-      <h1>Backup</h1>
+    <>
+      <h1 className="mt" id="backup">Daten &amp; Backup</h1>
       <section className="card readable">
         <p>Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig, z. B. in iCloud Drive („In Dateien sichern“).</p>
         <p className="muted small">{count ?? 0} Trainings gespeichert · letztes Backup: {lastBackup ? fmtDate(lastBackup) : 'noch nie'}</p>
         <button className="btn btn-primary btn-big" onClick={doExport}>Backup exportieren</button>
-        <button className="btn" onClick={() => fileRef.current?.click()}>Backup importieren …</button>
+        <button className="btn btn-ghost danger" onClick={() => fileRef.current?.click()}>Backup laden</button>
         <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => setPending(e.target.files?.[0] ?? null)} />
         {pending && (
           <div className="confirm">
@@ -51,8 +51,7 @@ export function More({ toast }: { toast: (m: string) => void }) {
         )}
       </section>
 
-      <h1 className="mt">App</h1>
-      <section className="card">
+      <section className="card readable">
         {!standalone ? (
           <p>⚠️ Du nutzt die Seite im Browser. Installiere sie: <b>Teilen → „Zum Home-Bildschirm“</b>. Nur dann bleiben die Daten auf dem iPhone sicher gespeichert und die App läuft offline.</p>
         ) : (
@@ -61,6 +60,6 @@ export function More({ toast }: { toast: (m: string) => void }) {
         <p className="muted small">Dauerhafter Speicher: {persisted == null ? 'unbekannt' : persisted ? 'ja' : 'nein (Backups umso wichtiger)'}</p>
         <p className="muted small">Version {__APP_VERSION__}</p>
       </section>
-    </div>
+    </>
   );
 }
