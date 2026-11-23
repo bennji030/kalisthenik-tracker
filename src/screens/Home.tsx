@@ -5,8 +5,14 @@ import { streak } from '../streak';
 import { planTemplate, startSession, type Plan } from '../sessions';
 import { fmtDate, fmtKg, WEEKDAYS } from '../util';
 import { WeightCard } from '../components/Weight';
+import { Habits } from '../components/Habits';
+import type { HistoryTab } from './History';
 
-export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void; goBackup: () => void }) {
+export function Home({ onOpen, goBackup, goHistory }: {
+  onOpen: (sessionId: string) => void;
+  goBackup: () => void;
+  goHistory: (tab: HistoryTab) => void;
+}) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
   const lastBackup = useLiveQuery(() => getMeta<number | null>('lastBackup', null), []);
@@ -115,6 +121,8 @@ export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void
           )}
         </section>
       )}
+
+      <Habits templateCount={templates.length} goHistory={goHistory} />
     </div>
   );
 }

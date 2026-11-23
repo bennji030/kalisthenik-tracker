@@ -1,6 +1,6 @@
 import type { Session } from './db';
 
-function weekStart(ts: number): Date {
+export function weekStart(ts: number): Date {
   const d = new Date(ts);
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - ((d.getDay() + 6) % 7));

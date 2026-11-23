@@ -3,7 +3,7 @@ import { seedIfEmpty } from './seed';
 import { activeSession } from './sessions';
 import { Home } from './screens/Home';
 import { Workout } from './screens/Workout';
-import { History } from './screens/History';
+import { History, type HistoryTab } from './screens/History';
 import { PlanScreen } from './screens/PlanEditor';
 import { More } from './screens/More';
 
@@ -19,6 +19,7 @@ const ICONS: Record<Tab, ReactNode> = {
 export function App() {
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
+  const [historyTab, setHistoryTab] = useState<HistoryTab>('sessions');
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -40,7 +41,7 @@ export function App() {
 
   if (!ready) return null;
 
-  const go = (t: Tab) => { setWorkoutId(null); setTab(t); window.scrollTo(0, 0); };
+  const go = (t: Tab) => { setWorkoutId(null); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
 
   return (
     <>
@@ -48,9 +49,9 @@ export function App() {
         {workoutId ? (
           <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
         ) : tab === 'home' ? (
-          <Home onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goBackup={() => go('more')} />
+          <Home onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goBackup={() => go('more')} goHistory={(t) => { go('history'); setHistoryTab(t); }} />
         ) : tab === 'history' ? (
-          <History />
+          <History initialTab={historyTab} />
         ) : tab === 'plan' ? (
           <PlanScreen />
         ) : (
