@@ -39,6 +39,8 @@ src/progression.ts   suggest(): double progression, rep by rep (see below)
 src/progression.test.ts  tests for it (protected)
 src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter on Home)
 src/streak.test.ts  tests for it
+src/habits.ts       30-day dot grids and week counts for the Home habit cards
+src/habits.test.ts  tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
@@ -71,6 +73,9 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   slot within its training day.
 - Streak (`streak`): weeks Mo–So; a past week counts when finished sessions ≥ number of
   training days (templates), the current week never breaks it; flames = sessions in those weeks.
+- Habit cards (Home, bottom): Weigh-In and Trainings, 30 local days as 3×10 dots, week Mo–So,
+  x/7 weigh-in days and x/N finished trainings (sessions, not days; N = number of templates);
+  tap opens Verlauf → Gewicht / Trainings.
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
   Calories and protein are still planned.

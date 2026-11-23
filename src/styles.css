@@ -225,6 +225,20 @@ select { width: 100%; appearance: none; }
 
 .cards { display: flex; flex-direction: column; gap: 12px; }
 
+/* Gewohnheiten */
+.habits-head { margin: 8px 0 12px; }
+@media (max-width: 699px) {
+  .cards-habits { flex-direction: row; }
+  .cards-habits > .habit { flex: 1 1 0; }
+}
+.habit { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 44px; padding: 14px; text-align: left; color: var(--text); background: var(--card); border: 0; border-radius: var(--radius); }
+.habit-title { font-size: 17px; font-weight: 700; }
+.habit-dots { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin: 8px 0; }
+.dot { aspect-ratio: 1; border-radius: 50%; background: var(--line); }
+.dot-on { background: var(--accent); }
+.habit-bar { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 4px; }
+.habit-bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.25s ease; }
+
 /* Keyboard focus */
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 

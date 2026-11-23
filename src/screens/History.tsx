@@ -8,8 +8,10 @@ import { entrySucceeded } from '../progression';
 import { fmtDate, fmtShortDate, summarizeSets } from '../util';
 import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
-export function History() {
-  const [tab, setTab] = useState<'sessions' | 'exercises' | 'weights'>('sessions');
+export type HistoryTab = 'sessions' | 'exercises' | 'weights';
+
+export function History({ initialTab = 'sessions' }: { initialTab?: HistoryTab }) {
+  const [tab, setTab] = useState<HistoryTab>(initialTab);
   const sessions = useLiveQuery(
     async () => (await db.sessions.toArray()).filter((s) => s.finishedAt).sort((a, b) => b.startedAt - a.startedAt),
     [],
