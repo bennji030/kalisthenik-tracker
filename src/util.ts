@@ -29,7 +29,13 @@ export function fmtShortDate(ts: number): string {
   return new Date(ts).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 }
 
-/** z. B. "4×4 @ 25 kg", "5, 4, 4, 4 @ 25 kg", "3×10", "20, 18 s" */
+/** Zusatzgewicht: "+25 kg", "+1,25 kg"; leer bei 0/null */
+export function fmtAddedKg(kg: number | null | undefined): string {
+  if (!kg) return '';
+  return `${kg > 0 ? '+' : ''}${fmtKg(kg)} kg`;
+}
+
+/** z. B. "4×4 +25 kg", "5, 4, 4, 4 +25 kg", "5 +25, 4 +27,5 kg", "3×10", "20, 18 s" */
 export function summarizeSets(sets: Pick<SetLog, 'reps' | 'weight' | 'sec'>[], type: ExType): string {
   if (!sets.length) return '–';
   if (type === 'hold') {
@@ -42,8 +48,9 @@ export function summarizeSets(sets: Pick<SetLog, 'reps' | 'weight' | 'sec'>[], t
   const repStr = allSame(reps) ? `${reps.length}×${reps[0]}` : reps.join(', ');
   if (type === 'reps') return repStr;
   const weights = sets.map((s) => s.weight ?? 0);
-  if (allSame(weights)) return weights[0] ? `${repStr} @ ${fmtKg(weights[0])} kg` : repStr;
-  return sets.map((s) => `${s.reps ?? 0}@${fmtKg(s.weight ?? 0)}`).join(', ') + ' kg';
+  if (allSame(weights)) return weights[0] ? `${repStr} ${fmtAddedKg(weights[0])}` : repStr;
+  const parts = sets.map((s) => (s.weight ? `${s.reps ?? 0} ${fmtAddedKg(s.weight).slice(0, -3)}` : `${s.reps ?? 0}`));
+  return parts.join(', ') + ' kg';
 }
 
 function allSame<T>(a: T[]): boolean {
