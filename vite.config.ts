@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Kalisthenik',
-        short_name: 'Kalisthenik',
+        name: 'Calisthenics',
+        short_name: 'Calisthenics',
         description: 'Trainings-Tracker für Calisthenics',
         lang: 'de',
         display: 'standalone',

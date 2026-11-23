@@ -1,10 +1,10 @@
 import { db, setMeta } from './db';
 
-const APP = 'kalisthenik-tracker';
+import { BACKUP_APP, isBackup } from './backupFormat';
 
 export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancelled'> {
   const data = {
-    app: APP,
+    app: BACKUP_APP,
     version: 1,
     exportedAt: new Date().toISOString(),
     exercises: await db.exercises.toArray(),
@@ -13,7 +13,7 @@ export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancell
     meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastBackup'),
   };
   const json = JSON.stringify(data, null, 1);
-  const name = `kalisthenik-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const name = `calisthenics-backup-${new Date().toISOString().slice(0, 10)}.json`;
   const file = new File([json], name, { type: 'application/json' });
 
   if (navigator.canShare?.({ files: [file] })) {
@@ -37,7 +37,7 @@ export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancell
 
 export async function importBackup(file: File): Promise<number> {
   const data = JSON.parse(await file.text());
-  if (data?.app !== APP || !Array.isArray(data.sessions)) throw new Error('Das ist keine Kalisthenik-Backup-Datei.');
+  if (!isBackup(data)) throw new Error('Das ist keine Calisthenics-Backup-Datei.');
   await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.meta], async () => {
     await Promise.all([db.exercises.clear(), db.templates.clear(), db.sessions.clear(), db.meta.clear()]);
     await db.exercises.bulkAdd(data.exercises);

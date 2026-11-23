@@ -16,6 +16,9 @@ in interactive sessions explain each step briefly before doing it.
   clears anything. Destructive actions need an inline confirm step.
 - No `window.alert/confirm/prompt` (they misbehave in iOS standalone mode); use
   the inline confirm pattern from `Workout.tsx`.
+- The visible app name is "Calisthenics", but the IndexedDB name `kalisthenik`, the
+  backup identifier `kalisthenik-tracker` and the base path `/kalisthenik-tracker/`
+  must not be renamed.
 - No backend, accounts, analytics or tracking. A network request only when an
   issue asks for one (e.g. a food database lookup), and the app must keep working
   offline without it.
@@ -39,6 +42,7 @@ src/streak.test.ts  tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
+src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
 src/util.ts          formatting helpers (German number/date format)
 src/App.tsx          tab bar (Training, Verlauf, Plan, Backup), toast
 src/screens/         Home, Workout, History, PlanEditor, More (backup + app info)
