@@ -34,7 +34,7 @@ export function More({ toast }: { toast: (m: string) => void }) {
   return (
     <div className="screen">
       <h1>Backup</h1>
-      <section className="card">
+      <section className="card readable">
         <p>Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig, z. B. in iCloud Drive („In Dateien sichern“).</p>
         <p className="muted small">{count ?? 0} Trainings gespeichert · letztes Backup: {lastBackup ? fmtDate(lastBackup) : 'noch nie'}</p>
         <button className="btn btn-primary btn-big" onClick={doExport}>Backup exportieren</button>

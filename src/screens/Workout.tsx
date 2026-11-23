@@ -124,6 +124,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
         <button className="btn btn-ghost" onClick={() => onClose()}>Zurück</button>
       </header>
 
+      <div className="cards">
       {session.entries.map((e, ei) => {
         const ex = exMap.get(e.exerciseId);
         if (!ex) return null;
@@ -139,6 +140,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
           />
         );
       })}
+      </div>
 
       <div className="wo-actions">
         {confirm === null && (
