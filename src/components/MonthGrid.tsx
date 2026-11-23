@@ -44,13 +44,15 @@ export function MonthGrid({ year, month, todayKey, selectedKey, statusOf, onSele
   return (
     <div className="cal-month">
       <DayHeader />
-      {monthGrid(year, month).map((week, i) => (
-        <div className="cal-row" key={i}>
-          {week.map((k, j) => k
-            ? <DayCell key={k} dayKey={k} status={statusOf(k)} today={k === todayKey} selected={k === selectedKey} onSelect={onSelect} />
-            : <span key={`e${j}`} className="day-empty" />)}
-        </div>
-      ))}
+      <div className="cal-rows">
+        {monthGrid(year, month).map((week, i) => (
+          <div className="cal-row" key={i}>
+            {week.map((k, j) => k
+              ? <DayCell key={k} dayKey={k} status={statusOf(k)} today={k === todayKey} selected={k === selectedKey} onSelect={onSelect} />
+              : <span key={`e${j}`} className="day-empty" />)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
