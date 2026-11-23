@@ -48,8 +48,8 @@ src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
 src/util.ts          formatting helpers (German number/date format)
-src/App.tsx          tab bar (Training, Verlauf, Plan, Backup), toast
-src/screens/         Home, Workout, History, PlanEditor, More (backup + app info)
+src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast
+src/screens/         Home (overview + weigh-in prompt), Training, Workout, History, PlanEditor (incl. Daten & Backup), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)

@@ -14,6 +14,12 @@ export function dayKey(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** Gewichtsabfrage fällig: heute kein Eintrag und heute nicht übersprungen. */
+export function weighPromptDue(weights: WeightEntry[], skipDay: string | null, now: number): boolean {
+  const today = dayKey(now);
+  return skipDay !== today && !weights.some((w) => w.date === today);
+}
+
 /** Mitternacht (lokal) des Tages YYYY-MM-DD als Zeitstempel. */
 export function dayTs(key: string): number {
   const [y, m, d] = key.split('-').map(Number);

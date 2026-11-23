@@ -44,6 +44,7 @@ h2 { font-size: 18px; margin: 0; }
 .mt { margin-top: 16px; }
 .muted { color: var(--muted); }
 .streak { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: var(--accent); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
+.home-head { display: block; width: 100%; min-height: 44px; background: none; border: 0; padding: 0; text-align: left; }
 .streak-zero { color: var(--muted); }
 .small { font-size: 13px; }
 p { margin: 0; }
@@ -175,13 +176,7 @@ p { margin: 0; }
 .weight-delta-box { text-align: right; }
 .weight-delta { font-size: 17px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .weight-delta.down { color: var(--ok); }
-.weight-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 8px; }
-.date {
-  background: var(--card-2); border: 1px solid transparent; border-radius: 10px; padding: 10px 8px;
-  font-size: 16px; min-width: 0; min-height: 44px; color-scheme: dark; font-variant-numeric: tabular-nums;
-}
-.date:focus { outline: none; border-color: var(--accent); }
-.ok-text { color: var(--ok); }
+.weight-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .weight-val { font-variant-numeric: tabular-nums; }
 .weight-edit { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .weight-num { max-width: 110px; }
