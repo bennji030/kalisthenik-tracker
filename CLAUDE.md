@@ -46,6 +46,8 @@ src/monthTiles.test.ts tests for it
 src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none), plannedWeekdays()
 src/calendar.test.ts tests for it
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
+src/entryDay.ts      entering a training for another day: entryNoon(), defaultTemplate(), entryTimes()
+src/entryDay.test.ts tests for it
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
 src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
@@ -85,6 +87,10 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
 - Habit cards (Home, bottom): Weigh-In and Trainings, 30 local days as 3×10 dots, week Mo–So,
   x/7 weigh-in days and x/N finished trainings (sessions, not days; N = number of templates);
   tap opens Verlauf → Gewicht / Trainings.
+- Trainings can be entered for any day (Training tab → "Training für diesen Tag
+  eintragen"). They are stored at 12:00 of that day plus the real duration (meta
+  `entryDay` holds the chosen day while the workout runs); the newest date counts
+  as "last time" for progression, also when it lies in the future.
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
   Calories and protein are still planned.

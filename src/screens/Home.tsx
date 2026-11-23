@@ -93,7 +93,8 @@ export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }:
   const finished = sessions.filter((s) => s.finishedAt);
   const backupDue = finished.length > 0 && (!lastBackup || Date.now() - lastBackup > 7 * 864e5);
   const flames = streak(finished, templates.length, Date.now());
-  const week = finished.filter((s) => Date.now() - s.startedAt < 7 * 864e5).length;
+  const now = Date.now();
+  const week = finished.filter((s) => s.startedAt <= now && now - s.startedAt < 7 * 864e5).length;
 
   return (
     <div className="screen">

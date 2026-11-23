@@ -1,6 +1,7 @@
 import { db, type EntryLog, type Exercise, type Session, type Slot, type Template } from './db';
 import { suggest, type Suggestion } from './progression';
 import { summarizeSets, uid, fmtShortDate } from './util';
+import { dayKey } from './weight';
 
 /** Frühere Einträge eines Slots (neuester zuerst), nur abgeschlossene Trainings mit mind. einem erledigten Satz. */
 export async function slotHistory(templateId: string, slot: Slot): Promise<{ entry: EntryLog; at: number }[]> {
@@ -36,7 +37,12 @@ export async function planTemplate(t: Template): Promise<Plan[]> {
   return out;
 }
 
-export async function startSession(t: Template): Promise<string> {
+/** Meta-Schlüssel für ein laufendes Training, das für einen anderen Tag eingetragen wird. */
+export const ENTRY_DAY_KEY = 'entryDay';
+export interface EntryDay { sessionId: string; day: string }
+
+/** Startet ein Training; mit `day` (nicht heute) wird es beim Beenden auf diesen Tag gelegt. */
+export async function startSession(t: Template, day?: string): Promise<string> {
   const plans = await planTemplate(t);
   const entries: EntryLog[] = plans.map(({ slot, exercise, suggestion: s, lastSummary }) => {
     const judged = s.kind !== 'free';
@@ -66,7 +72,14 @@ export async function startSession(t: Template): Promise<string> {
     finishedAt: null,
     entries,
   };
-  await db.sessions.add(session);
+  if (day && day !== dayKey(Date.now())) {
+    await db.transaction('rw', db.sessions, db.meta, async () => {
+      await db.sessions.add(session);
+      await db.meta.put({ key: ENTRY_DAY_KEY, value: { sessionId: session.id, day } satisfies EntryDay });
+    });
+  } else {
+    await db.sessions.add(session);
+  }
   return session.id;
 }
 

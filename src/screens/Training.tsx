@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type Session, type Template } from '../db';
 import { dayStatus, plannedWeekdays, weekKeys } from '../calendar';
+import { defaultTemplate } from '../entryDay';
 import { sessionDayKeys } from '../habits';
 import { planTemplate, startSession, type Plan } from '../sessions';
 import { DayCell, DayHeader, MonthGrid } from '../components/MonthGrid';
@@ -16,6 +17,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const todayKey = dayKey(Date.now());
   const [selectedDay, setSelectedDay] = useState(todayKey);
   const [selected, setSelected] = useState<string | null>(null);
+  const [entering, setEntering] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState({ y: 0, m: 0 });
   const [busy, setBusy] = useState(false);
@@ -35,7 +37,8 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const daySessions = finished
     .filter((s) => dayKey(s.startedAt) === selectedDay)
     .sort((a, b) => a.startedAt - b.startedAt);
-  const chosen = isToday ? templates.find((t) => t.id === selected) : undefined;
+  const showChips = isToday || (entering && !active);
+  const chosen = showChips ? templates.find((t) => t.id === selected) : undefined;
   const status = statusOf(selectedDay);
 
   const lastOf = (t: Template) =>
@@ -44,12 +47,13 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const start = async (t: Template) => {
     if (busy) return;
     setBusy(true);
-    const id = await startSession(t);
+    const id = await startSession(t, isToday ? undefined : selectedDay);
     setBusy(false);
     onOpen(id);
   };
 
-  const pick = (k: string) => { setSelectedDay(k); setSelected(null); };
+  const pick = (k: string) => { setSelectedDay(k); setSelected(null); setEntering(false); };
+  const enter = () => { setEntering(true); setSelected(defaultTemplate(templates, selectedDay)?.id ?? null); };
   const toggle = () => {
     if (!expanded) {
       const d = new Date(dayTs(selectedDay));
@@ -139,7 +143,11 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
 
       {dayCards}
 
-      {isToday && (
+      {!isToday && !active && !entering && (
+        <button className="btn btn-big" onClick={enter}>Training für diesen Tag eintragen</button>
+      )}
+
+      {showChips && (
         <div className="chips">
           {templates.map((t) => (
             <button
