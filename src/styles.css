@@ -162,12 +162,29 @@ p { margin: 0; }
 .log li span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
 .list { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: var(--radius); overflow: hidden; }
 .list li + li { border-top: 1px solid var(--line); }
-.list button { width: 100%; background: none; border: 0; padding: 14px; display: flex; justify-content: space-between; text-align: left; }
+.list > li > button { width: 100%; background: none; border: 0; padding: 14px; display: flex; justify-content: space-between; text-align: left; }
 .chart { width: 100%; height: auto; }
 .chart-grid { stroke: var(--line); stroke-width: 1; }
 .chart-tick { fill: var(--muted); font-size: 10px; }
 .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .chart-dot { fill: var(--accent); }
+
+/* Gewicht */
+.weight-stats { display: flex; align-items: flex-end; gap: 12px; }
+.weight-avg { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.weight-delta-box { text-align: right; }
+.weight-delta { font-size: 17px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.weight-delta.down { color: var(--ok); }
+.weight-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: 8px; }
+.date {
+  background: var(--card-2); border: 1px solid transparent; border-radius: 10px; padding: 10px 8px;
+  font-size: 16px; min-width: 0; min-height: 44px; color-scheme: dark; font-variant-numeric: tabular-nums;
+}
+.date:focus { outline: none; border-color: var(--accent); }
+.ok-text { color: var(--ok); }
+.weight-val { font-variant-numeric: tabular-nums; }
+.weight-edit { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.weight-num { max-width: 110px; }
 
 /* Plan */
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
@@ -218,7 +235,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .chip:hover:not(.chip-on) { background: var(--card-2); }
   .tabbar button:hover:not(.on) { color: var(--text); }
   .seg button:hover:not(.on) { color: var(--text); }
-  .list button:hover { background: var(--card-2); }
+  .list > li > button:hover { background: var(--card-2); }
   .card-toggle:hover { color: var(--accent); }
   .check:not(.checked):hover { background: var(--line); }
   .rest-btn:hover { background: var(--line); }

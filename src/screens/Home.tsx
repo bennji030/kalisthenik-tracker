@@ -4,6 +4,7 @@ import { db, getMeta, type Template } from '../db';
 import { streak } from '../streak';
 import { planTemplate, startSession, type Plan } from '../sessions';
 import { fmtDate, fmtKg, WEEKDAYS } from '../util';
+import { WeightCard } from '../components/Weight';
 
 export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void; goBackup: () => void }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
@@ -67,6 +68,8 @@ export function Home({ onOpen, goBackup }: { onOpen: (sessionId: string) => void
           💾 Letztes Backup {lastBackup ? `am ${fmtDate(lastBackup)}` : 'noch nie'} – jetzt sichern
         </button>
       )}
+
+      <WeightCard />
 
       {active && (
         <section className="card card-accent">

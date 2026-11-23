@@ -34,7 +34,7 @@ queries), `vite-plugin-pwa` (auto-update service worker), Vitest. No UI or CSS
 framework, no router, no chart library.
 
 ```
-src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta)
+src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry)
 src/progression.ts   suggest(): double progression, rep by rep (see below)
 src/progression.test.ts  tests for it (protected)
 src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter on Home)
@@ -43,10 +43,12 @@ src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
 src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
+src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
+src/weight.test.ts   tests for it
 src/util.ts          formatting helpers (German number/date format)
 src/App.tsx          tab bar (Training, Verlauf, Plan, Backup), toast
 src/screens/         Home, Workout, History, PlanEditor, More (backup + app info)
-src/components/      NumInput, RestTimer, LineChart (hand-written SVG)
+src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
 ```
@@ -69,8 +71,9 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   slot within its training day.
 - Streak (`streak`): weeks Mo–So; a past week counts when finished sessions ≥ number of
   training days (templates), the current week never breaks it; flames = sessions in those weeks.
-- Goal: fat loss while keeping strength. Planned:
-  body weight with a 7-day average, then calories and protein.
+- Goal: fat loss while keeping strength. Body weight with a 7-day average
+  exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
+  Calories and protein are still planned.
 
 ## Design
 

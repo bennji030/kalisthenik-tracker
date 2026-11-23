@@ -1,6 +1,6 @@
 import { db, setMeta } from './db';
-
 import { BACKUP_APP, isBackup } from './backupFormat';
+import { isWeightList } from './weight';
 
 export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancelled'> {
   const data = {
@@ -11,6 +11,7 @@ export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancell
     templates: await db.templates.toArray(),
     sessions: await db.sessions.toArray(),
     meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastBackup'),
+    weights: await db.weights.toArray(),
   };
   const json = JSON.stringify(data, null, 1);
   const name = `calisthenics-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -38,12 +39,19 @@ export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancell
 export async function importBackup(file: File): Promise<number> {
   const data = JSON.parse(await file.text());
   if (!isBackup(data)) throw new Error('Das ist keine Calisthenics-Backup-Datei.');
-  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.meta], async () => {
+  // Alte Backups ohne "weights" lassen die vorhandenen Gewichte stehen.
+  const hasWeights = 'weights' in data;
+  if (hasWeights && !isWeightList(data.weights)) throw new Error('Die Gewichtsdaten im Backup sind ungültig.');
+  await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.meta, db.weights], async () => {
     await Promise.all([db.exercises.clear(), db.templates.clear(), db.sessions.clear(), db.meta.clear()]);
     await db.exercises.bulkAdd(data.exercises);
     await db.templates.bulkAdd(data.templates);
     await db.sessions.bulkAdd(data.sessions);
     await db.meta.bulkAdd(data.meta ?? []);
+    if (hasWeights) {
+      await db.weights.clear();
+      await db.weights.bulkAdd(data.weights);
+    }
     await setMeta('seeded', true);
     await setMeta('lastBackup', Date.now());
   });

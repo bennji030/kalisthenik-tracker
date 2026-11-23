@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Exercise, type Session } from '../db';
+import { db, saveWeight, type Exercise, type Session } from '../db';
 import { LineChart } from '../components/LineChart';
+import { NumInput } from '../components/NumInput';
+import { WeightStats } from '../components/Weight';
 import { entrySucceeded } from '../progression';
 import { fmtDate, fmtShortDate, summarizeSets } from '../util';
+import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
 export function History() {
-  const [tab, setTab] = useState<'sessions' | 'exercises'>('sessions');
+  const [tab, setTab] = useState<'sessions' | 'exercises' | 'weights'>('sessions');
   const sessions = useLiveQuery(
     async () => (await db.sessions.toArray()).filter((s) => s.finishedAt).sort((a, b) => b.startedAt - a.startedAt),
     [],
@@ -21,11 +24,14 @@ export function History() {
       <div className="seg">
         <button className={tab === 'sessions' ? 'on' : ''} onClick={() => setTab('sessions')}>Trainings</button>
         <button className={tab === 'exercises' ? 'on' : ''} onClick={() => setTab('exercises')}>Übungen</button>
+        <button className={tab === 'weights' ? 'on' : ''} onClick={() => setTab('weights')}>Gewicht</button>
       </div>
-      {sessions.length === 0 && <p className="muted">Noch keine abgeschlossenen Trainings.</p>}
+      {tab !== 'weights' && sessions.length === 0 && <p className="muted">Noch keine abgeschlossenen Trainings.</p>}
       {tab === 'sessions'
         ? <div className="cards">{sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)}</div>
-        : <ExerciseList sessions={sessions} exercises={exercises} />}
+        : tab === 'exercises'
+          ? <ExerciseList sessions={sessions} exercises={exercises} />
+          : <WeightHistory />}
     </div>
   );
 }
@@ -119,5 +125,67 @@ function ExerciseList({ sessions, exercises }: { sessions: Session[]; exercises:
         <li key={e.id}><button onClick={() => setSel(e.id)}>{e.name}<span className="muted">›</span></button></li>
       ))}
     </ul>
+  );
+}
+
+function WeightHistory() {
+  const weights = useLiveQuery(() => db.weights.toArray(), []);
+  if (!weights) return null;
+  if (weights.length === 0) return <p className="muted">Noch kein Gewicht eingetragen.</p>;
+  const rolling = rollingAverages(weights);
+  const label = (date: string) => fmtShortDate(dayTs(date));
+  return (
+    <>
+      <section className="card">
+        <WeightStats entries={weights} />
+        <LineChart
+          unit="kg"
+          points={rolling.map((r) => ({ x: dayTs(r.date), y: r.kg, label: label(r.date) }))}
+          line={rolling.map((r) => ({ x: dayTs(r.date), y: r.avg, label: label(r.date) }))}
+          emptyText="Ab zwei Einträgen gibt es hier eine Kurve."
+        />
+      </section>
+      <ul className="list">
+        {[...rolling].reverse().map((r) => <WeightRow key={r.date} r={r} />)}
+      </ul>
+    </>
+  );
+}
+
+function WeightRow({ r }: { r: WeightPoint }) {
+  const [edit, setEdit] = useState(false);
+  const [del, setDel] = useState(false);
+  const [kg, setKg] = useState<number | null>(r.kg);
+  const close = () => { setEdit(false); setDel(false); };
+
+  if (!edit) {
+    return (
+      <li>
+        <button onClick={() => { setKg(r.kg); setEdit(true); }}>
+          <span>{fmtDate(dayTs(r.date), true)}</span>
+          <span className="weight-val">{fmtWeight(r.kg)} kg <span className="muted">Ø {fmtWeight(r.avg)}</span></span>
+        </button>
+      </li>
+    );
+  }
+  return (
+    <li className="weight-edit">
+      <p>{fmtDate(dayTs(r.date), true)}</p>
+      <div className="row">
+        <NumInput value={kg} onChange={setKg} decimal placeholder="kg" ariaLabel="Gewicht in kg" className="num weight-num" />
+        <button className="btn btn-small btn-primary" disabled={!isValidKg(kg)} onClick={async () => { await saveWeight(r.date, kg!); close(); }}>Speichern</button>
+        <button className="btn btn-small" onClick={close}>Abbrechen</button>
+      </div>
+      <div className="row">
+        {!del ? (
+          <button className="btn btn-small btn-ghost danger" onClick={() => setDel(true)}>Löschen</button>
+        ) : (
+          <>
+            <button className="btn btn-small btn-danger" onClick={() => db.weights.delete(r.date)}>Wirklich löschen</button>
+            <button className="btn btn-small" onClick={() => setDel(false)}>Abbrechen</button>
+          </>
+        )}
+      </div>
+    </li>
   );
 }

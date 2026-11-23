@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { roundKg } from './weight';
 
 /** weighted = Wdh. + Zusatzgewicht, reps = nur Wdh., hold = Haltezeit in Sekunden */
 export type ExType = 'weighted' | 'reps' | 'hold';
@@ -61,6 +62,12 @@ export interface Session {
   entries: EntryLog[];
 }
 
+/** Körpergewicht, ein Eintrag pro lokalem Kalendertag (YYYY-MM-DD). */
+export interface WeightEntry {
+  date: string;
+  kg: number;
+}
+
 export interface Meta {
   key: string;
   value: unknown;
@@ -71,6 +78,7 @@ class KalisthenikDB extends Dexie {
   templates!: Table<Template, string>;
   sessions!: Table<Session, string>;
   meta!: Table<Meta, string>;
+  weights!: Table<WeightEntry, string>;
 
   constructor() {
     super('kalisthenik');
@@ -80,6 +88,7 @@ class KalisthenikDB extends Dexie {
       sessions: 'id, templateId, startedAt, finishedAt',
       meta: 'key',
     });
+    this.version(2).stores({ weights: 'date' });
   }
 }
 
@@ -92,4 +101,9 @@ export async function getMeta<T>(key: string, fallback: T): Promise<T> {
 
 export async function setMeta(key: string, value: unknown) {
   await db.meta.put({ key, value });
+}
+
+/** Speichert das Gewicht für einen Tag; ein vorhandener Eintrag wird überschrieben. */
+export async function saveWeight(date: string, kg: number) {
+  await db.weights.put({ date, kg: roundKg(kg) });
 }
