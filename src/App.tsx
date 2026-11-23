@@ -60,7 +60,8 @@ export function App() {
         ) : tab === 'home' && habitView ? (
           <HabitMonths kind={habitView} onBack={() => { setHabitView(null); window.scrollTo(0, 0); }} goHistory={goHistory} />
         ) : tab === 'home' ? (
-          <Home goTraining={() => go('training')} goSettings={openSettings} goHabit={(k) => { setHabitView(k); window.scrollTo(0, 0); }} />
+          <Home goTraining={() => go('training')} goSettings={openSettings} goHabit={(k) => { setHabitView(k); window.scrollTo(0, 0); }}
+            openWorkout={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goWeight={() => goHistory('weights')} />
         ) : tab === 'training' ? (
           <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
         ) : tab === 'history' ? (

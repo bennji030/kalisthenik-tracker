@@ -18,6 +18,7 @@ export function parseNum(s: string): number | null {
 }
 
 export const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+export const WEEKDAYS_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
 export function fmtDate(ts: number, withWeekday = false): string {
   const d = new Date(ts);

@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { dotGrid, sessionDayKeys, weekDayCount, weekSessionCount } from '../habits';
+import { WeightCard } from './Weight';
 import type { HabitKind } from '../screens/HabitMonths';
 
 function HabitCard({ title, dots, count, target, tab, onOpen }: {
@@ -32,7 +33,7 @@ function HabitCard({ title, dots, count, target, tab, onOpen }: {
   );
 }
 
-export function Habits({ templateCount, goHabit }: { templateCount: number; goHabit: (kind: HabitKind) => void }) {
+export function Habits({ templateCount, goHabit, goWeight }: { templateCount: number; goHabit: (kind: HabitKind) => void; goWeight: () => void }) {
   const weights = useLiveQuery(() => db.weights.toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
   if (!weights || !sessions) return null;
@@ -51,6 +52,7 @@ export function Habits({ templateCount, goHabit }: { templateCount: number; goHa
           title="Trainings" tab="sessions" onOpen={goHabit}
           dots={dotGrid(trained, now)} count={weekSessionCount(sessions, now)} target={templateCount}
         />
+        <WeightCard entries={weights} onOpen={goWeight} />
       </div>
     </section>
   );

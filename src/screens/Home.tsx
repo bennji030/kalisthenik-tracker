@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getMeta } from '../db';
+import { db, getMeta, type Session, type Template } from '../db';
+import { startSession } from '../sessions';
+import { estimateMinutes, nextTraining } from '../today';
+import { dayKey } from '../weight';
 import { parseProfile } from '../profile';
 import { streak } from '../streak';
 import { fmtDate } from '../util';
@@ -7,10 +11,77 @@ import { WeighPrompt } from '../components/Weight';
 import { Habits } from '../components/Habits';
 import type { HabitKind } from './HabitMonths';
 
-export function Home({ goTraining, goSettings, goHabit }: {
+function TodayCard({ templates, sessions, openWorkout }: {
+  templates: Template[];
+  sessions: Session[];
+  openWorkout: (id: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const active = sessions.find((s) => s.finishedAt == null);
+  if (active) {
+    return (
+      <section className="card card-accent">
+        <h2>{active.templateName} läuft</h2>
+        <button className="btn btn-primary btn-big" onClick={() => openWorkout(active.id)}>Weitermachen</button>
+      </section>
+    );
+  }
+
+  const today = dayKey(Date.now());
+  const doneToday = sessions
+    .filter((s) => s.finishedAt != null && dayKey(s.startedAt) === today)
+    .sort((a, b) => a.startedAt - b.startedAt);
+  if (doneToday.length) {
+    return (
+      <section className="card">
+        <h2 className="habit-ok">Erledigt ✓</h2>
+        {doneToday.map((s) => (
+          <p key={s.id} className="muted small">{s.templateName} · {Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000)} min</p>
+        ))}
+      </section>
+    );
+  }
+
+  const todays = templates.filter((t) => t.weekdays.includes(new Date().getDay()));
+  if (todays.length) {
+    const start = async (t: Template) => {
+      if (busy) return;
+      setBusy(true);
+      const id = await startSession(t);
+      setBusy(false);
+      openWorkout(id);
+    };
+    return (
+      <section className="card">
+        {todays.map((t) => {
+          const m = estimateMinutes(t.slots);
+          return (
+            <div key={t.id}>
+              <h2>{t.name}</h2>
+              <p className="muted small">{t.slots.length === 1 ? '1 Übung' : `${t.slots.length} Übungen`}{m > 0 && ` · ca. ${m} min`}</p>
+              <button className="btn btn-primary btn-big" disabled={busy} onClick={() => start(t)}>Training starten</button>
+            </div>
+          );
+        })}
+      </section>
+    );
+  }
+
+  const next = nextTraining(templates, Date.now());
+  return (
+    <section className="card">
+      <p className="muted">Ruhetag: Heute ist kein Training geplant.</p>
+      {next && <p className="muted small">{next.label}: {next.names.join(' / ')}</p>}
+    </section>
+  );
+}
+
+export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }: {
   goTraining: () => void;
   goSettings: () => void;
   goHabit: (kind: HabitKind) => void;
+  openWorkout: (id: string) => void;
+  goWeight: () => void;
 }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
@@ -20,7 +91,6 @@ export function Home({ goTraining, goSettings, goHabit }: {
   if (!templates || !sessions) return <div className="screen" />;
 
   const finished = sessions.filter((s) => s.finishedAt);
-  const todays = templates.filter((t) => t.weekdays.includes(new Date().getDay()));
   const backupDue = finished.length > 0 && (!lastBackup || Date.now() - lastBackup > 7 * 864e5);
   const flames = streak(finished, templates.length, Date.now());
   const week = finished.filter((s) => Date.now() - s.startedAt < 7 * 864e5).length;
@@ -49,10 +119,11 @@ export function Home({ goTraining, goSettings, goHabit }: {
           </button>
         </div>
         <p className="muted small">{fmtDate(Date.now(), true)}</p>
-        <h1>{todays.length ? todays.map((t) => t.name).join(' / ') : 'Kein Trainingstag'}</h1>
         <p className="muted small">{week} Training{week === 1 ? '' : 's'} in den letzten 7 Tagen</p>
         <button className="home-hit" onClick={goTraining} aria-label="Zum Training" />
       </section>
+
+      <TodayCard templates={templates} sessions={sessions} openWorkout={openWorkout} />
 
       <WeighPrompt />
 
@@ -62,7 +133,7 @@ export function Home({ goTraining, goSettings, goHabit }: {
         </button>
       )}
 
-      <Habits templateCount={templates.length} goHabit={goHabit} />
+      <Habits templateCount={templates.length} goHabit={goHabit} goWeight={goWeight} />
     </div>
   );
 }
