@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Template } from '../db';
 import { planTemplate, startSession, type Plan } from '../sessions';
-import { fmtDate, fmtKg, WEEKDAYS } from '../util';
+import { fmtDate, fmtAddedKg, WEEKDAYS } from '../util';
 
 export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
@@ -94,5 +94,5 @@ function previewText(reps: (number | null)[], weight: number | null, type: strin
   if (type === 'hold' || kind === 'free') return `${reps.length} Sätze · frei`;
   const r = reps.map((x) => x ?? 0);
   const repStr = r.every((x) => x === r[0]) ? `${r.length}×${r[0]}` : r.join(', ');
-  return type === 'weighted' ? `${repStr} @ ${fmtKg(weight)} kg` : `${repStr} Wdh.`;
+  return type === 'weighted' && weight ? `${repStr} ${fmtAddedKg(weight)}` : `${repStr} Wdh.`;
 }

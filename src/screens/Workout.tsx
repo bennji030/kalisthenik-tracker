@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, unlockAudio } from '../components/RestTimer';
 import { entrySucceeded } from '../progression';
-import { fmtKg } from '../util';
+import { fmtAddedKg, fmtKg } from '../util';
 
 const KIND_CLASS: Record<string, string> = {
   'up-reps': 'pill-up', 'up-weight': 'pill-up', first: 'pill-neutral', repeat: 'pill-warn',
@@ -178,9 +178,9 @@ function emptySet(): SetLog {
   return { targetReps: null, targetWeight: null, targetSec: null, reps: null, weight: null, sec: null, done: false };
 }
 
-function targetText(s: SetLog, type: Exercise['type']): string {
+function targetText(s: SetLog, type: Exercise['type']): ReactNode {
   if (s.targetReps == null) return '–';
-  if (type === 'weighted') return `${s.targetReps} × ${fmtKg(s.targetWeight)}`;
+  if (type === 'weighted' && s.targetWeight) return <>{s.targetReps} × <span className="nowrap">{fmtAddedKg(s.targetWeight)}</span></>;
   return `${s.targetReps}`;
 }
 
