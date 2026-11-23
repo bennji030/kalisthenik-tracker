@@ -1,4 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { getMeta } from './db';
+import { applyTheme, parseThemePref, resolveTheme } from './theme';
 import { seedIfEmpty } from './seed';
 import { activeSession } from './sessions';
 import { Home } from './screens/Home';
@@ -35,6 +38,19 @@ export function App() {
       setReady(true);
     })();
   }, []);
+
+  const storedTheme = useLiveQuery(async () => ({ value: await getMeta<unknown>('theme', undefined) }), []);
+  useEffect(() => {
+    if (!storedTheme) return;
+    const pref = parseThemePref(storedTheme.value);
+    try { localStorage.setItem('theme', pref); } catch { /* egal */ }
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    applyTheme(resolveTheme(pref, mq.matches));
+    if (pref !== 'system') return;
+    const onChange = () => applyTheme(resolveTheme(pref, mq.matches));
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [storedTheme]);
 
   const toast = (m: string) => {
     setToastMsg(m);
