@@ -6,6 +6,7 @@ import { Training } from './screens/Training';
 import { Workout } from './screens/Workout';
 import { History, type HistoryTab } from './screens/History';
 import { PlanScreen } from './screens/PlanEditor';
+import { HabitMonths, type HabitKind } from './screens/HabitMonths';
 import { Settings } from './screens/Settings';
 
 type Tab = 'home' | 'training' | 'history' | 'plan';
@@ -23,6 +24,7 @@ export function App() {
   const [historyTab, setHistoryTab] = useState<HistoryTab>('sessions');
   const [settings, setSettings] = useState(false);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
+  const [habitView, setHabitView] = useState<HabitKind | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function App() {
 
   if (!ready) return null;
 
-  const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
+  const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHabitView(null); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
 
   const openSettings = () => { setSettings(true); window.scrollTo(0, 0); };
   const goHistory = (t: HistoryTab) => { go('history'); setHistoryTab(t); };
@@ -55,8 +57,10 @@ export function App() {
           <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
         ) : settings ? (
           <Settings toast={toast} onBack={() => go('home')} goHistory={goHistory} />
+        ) : tab === 'home' && habitView ? (
+          <HabitMonths kind={habitView} onBack={() => { setHabitView(null); window.scrollTo(0, 0); }} goHistory={goHistory} />
         ) : tab === 'home' ? (
-          <Home goTraining={() => go('training')} goSettings={openSettings} goHistory={goHistory} />
+          <Home goTraining={() => go('training')} goSettings={openSettings} goHabit={(k) => { setHabitView(k); window.scrollTo(0, 0); }} />
         ) : tab === 'training' ? (
           <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
         ) : tab === 'history' ? (
