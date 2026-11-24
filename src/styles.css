@@ -23,7 +23,6 @@
   --on-cardio-soft: #4fb3ff;
   --raised: #262a32;
   --body: #2a2e36;
-  --body-edge: #2a2e36;
   --body-muscle: #3d424d;
   --body-mid: #ffa678;
   --bar-bg: rgba(14, 15, 18, 0.92);
@@ -59,9 +58,8 @@
   --on-accent-soft: #a83b0b;
   --on-cardio-soft: #0a60a6;
   --raised: #ffffff;
-  --body: #e4e6eb;
-  --body-edge: #b3b7c0;
-  --body-muscle: #f3f4f7;
+  --body: #b9bfca;
+  --body-muscle: #d3d8e0;
   --body-mid: #e98a5c;
   --bar-bg: rgba(242, 242, 247, 0.92);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.18);
