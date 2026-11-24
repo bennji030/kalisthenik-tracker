@@ -205,9 +205,11 @@ function SlotSheet({ template, initial, isNew, exercises, onClose }: {
   return (
     <Sheet title={isNew ? 'Neue Übung' : (ex?.name ?? 'Übung')}>
       {type && suggestion && (
-        <div className="sheet-preview">
-          <p>{previewText(suggestion, type, history.length > 0)}</p>
-          <p className="muted small">{suggestion.label}</p>
+        <div className="sheet-sticky">
+          <div className="sheet-preview">
+            <p>{previewText(suggestion, type, history.length > 0)}</p>
+            <p className="muted small">{suggestion.label}</p>
+          </div>
         </div>
       )}
       <label className="field">
