@@ -30,11 +30,14 @@ const fmtTime = (ts: number) => new Date(ts).toLocaleTimeString('de-DE', { hour:
 /** Native App: Health kommt direkt aus HealthKit, ohne Server und Kurzbefehl. */
 function NativeHealthCard({ config, status }: { config: HealthConfig; status: ReturnType<typeof parseHealthStatus> }) {
   const [result, setResult] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const running = useSyncRunning();
   const available = native.healthAvailable();
 
+  // busy sperrt den Knopf, solange die Abfrage von iOS offen ist (kein zweiter Tipp).
   const allow = async () => {
     setResult(null);
+    setBusy(true);
     try {
       await native.requestHealth();
       await db.transaction('rw', db.meta, async () => {
@@ -43,6 +46,8 @@ function NativeHealthCard({ config, status }: { config: HealthConfig; status: Re
     } catch {
       setResult('Zugriff auf Apple Health nicht möglich');
       return;
+    } finally {
+      setBusy(false);
     }
     const r = await syncHealth(true);
     if (r && r.kind !== 'skipped') setResult(r.error ?? 'Apple Health verbunden');
@@ -63,7 +68,7 @@ function NativeHealthCard({ config, status }: { config: HealthConfig; status: Re
         </div>
       )}
       {!available && <p className="muted small">Apple Health ist in dieser App-Version nicht eingebaut.</p>}
-      <button className="btn" disabled={!available || running} onClick={allow}>Zugriff auf Apple Health erlauben</button>
+      <button className="btn" disabled={!available || running || busy} onClick={allow}>Zugriff auf Apple Health erlauben</button>
       {result && <p className="small" role="status">{result}</p>}
     </section>
   );

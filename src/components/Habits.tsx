@@ -131,7 +131,7 @@ function KcalCard({ today, goals, onOpen, goSettings }: {
           <div className="small">Protein <b className="habit-val">{show(protein)}</b> <span className="muted">/ {fmtInt(goals.proteinG)} g</span></div>
         </>
       )}
-      {burned && <div className="muted small">{burned}{balance && ` · ${balance}`}</div>}
+      {burned && <div className="muted small">{burned}{balance && <> · <span className="nowrap">{balance}</span></>}</div>}
       <button
         className="habit-hit"
         onClick={onOpen}
