@@ -6,6 +6,7 @@ import {
   parseHealthStatus, type HealthConfig,
 } from '../health';
 import { syncHealth } from '../healthSync';
+import { native } from '../native';
 import { useSyncRunning } from '../useHealthSync';
 import { fmtDate } from '../util';
 
@@ -17,12 +18,56 @@ export function HealthSection({ toast }: { toast: (m: string) => void }) {
   return (
     <>
       <h1 className="mt">Apple Health</h1>
-      {stored && <HealthCard initial={stored.config} status={stored.status} toast={toast} />}
+      {stored && (native.isNative()
+        ? <NativeHealthCard config={parseHealthConfig(stored.config)} status={stored.status} />
+        : <HealthCard initial={stored.config} status={stored.status} toast={toast} />)}
     </>
   );
 }
 
 const fmtTime = (ts: number) => new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+/** Native App: Health kommt direkt aus HealthKit, ohne Server und Kurzbefehl. */
+function NativeHealthCard({ config, status }: { config: HealthConfig; status: ReturnType<typeof parseHealthStatus> }) {
+  const [result, setResult] = useState<string | null>(null);
+  const running = useSyncRunning();
+  const available = native.healthAvailable();
+
+  const allow = async () => {
+    setResult(null);
+    try {
+      await native.requestHealth();
+      await db.transaction('rw', db.meta, async () => {
+        await setMeta('health', { ...parseHealthConfig(await getMeta<unknown>('health', undefined)), healthKit: true });
+      });
+    } catch {
+      setResult('Zugriff auf Apple Health nicht möglich');
+      return;
+    }
+    const r = await syncHealth(true);
+    if (r && r.kind !== 'skipped') setResult(r.error ?? 'Apple Health verbunden');
+  };
+
+  return (
+    <section className="card readable settings-form">
+      <p className="muted small">
+        Schritte, gegessene Kalorien, Protein und verbrauchte Kalorien kommen direkt aus Apple Health.
+        MyFitnessPal muss dafür „Nahrungsenergie“ und „Protein“ an Health schreiben.
+      </p>
+      {!config.healthKit ? (
+        <p className="muted small">Noch nicht eingerichtet</p>
+      ) : (
+        <div>
+          <p className="muted small">{status.lastSync ? `Letzte Aktualisierung: ${fmtDate(status.lastSync)} ${fmtTime(status.lastSync)}` : 'Noch nie aktualisiert'}</p>
+          {status.error && <p className="muted small">{status.error}</p>}
+        </div>
+      )}
+      {!available && <p className="muted small">Apple Health ist in dieser App-Version nicht eingebaut.</p>}
+      <button className="btn" disabled={!available || running} onClick={allow}>Zugriff auf Apple Health erlauben</button>
+      {result && <p className="small" role="status">{result}</p>}
+    </section>
+  );
+}
 
 function HealthCard({ initial, status, toast }: {
   initial: unknown;

@@ -260,6 +260,8 @@ p { margin: 0; }
 .chart-value { fill: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; stroke: var(--card); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .chart-goal { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+.chart-line2 { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-dot2 { fill: var(--muted); stroke: var(--card); stroke-width: 1.5; }
 .chart-bar-accent { fill: var(--accent); }
 .chart-bar-cardio { fill: var(--cardio); }
 .stat-group { display: flex; flex-direction: column; gap: 8px; }

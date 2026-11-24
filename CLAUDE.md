@@ -80,7 +80,7 @@ src/backupFormat.ts   backup identifier and isBackup() validation, exportMeta()/
 src/backupMeta.test.ts tests for the meta helpers
 src/reset.ts         "Alle Daten löschen": resetAll() clears all six tables in one transaction, keeps meta `health`, `healthStatus`, `theme` (keptMeta()), then runs seed(), ensureCardioDay(), ensureMuscleDefaults()
 src/reset.test.ts    tests for it
-src/statsCharts.ts  Statistik, Ernährung/Cardio: weightWeek(), weightWeekChange(), dayBars() (7 Tage kcal/Protein), cardioWeeks() (8 Wochen)
+src/statsCharts.ts  Statistik, Ernährung/Cardio: weightWeek(), weightWeekChange(), dayBars() (7 Tage kcal/Protein/burnedKcal), cardioWeeks() (8 Wochen)
 src/statsCharts.test.ts tests for it
 src/stats.ts        Statistik, Training: exerciseGroup() (Pull/Push/Skills/Sonstiges), sessionMetric(), exerciseWindow() (letzte 7), windowChange(), fmtChange()
 src/stats.test.ts   tests for it
@@ -92,25 +92,27 @@ src/dayValues.ts     steps/kcal/protein per day: validators, mergeDay(), stepsWe
 src/dayValues.test.ts tests for it
 src/health.ts        Apple Health sync, pure: config/status parsing, URL/token validation, shouldSync(), parseDaysResponse(), mergeHealth(), yesterdayKey(), runHealthSync() (fetch passed in)
 src/health.test.ts   tests for it (plus manualFields/nextManual)
-src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memory throttle and running flag, force-next flag
+src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memory throttle and running flag, force-next flag; in the native app it reads HealthKit through `native` instead of the server
+src/healthKit.ts     Apple Health via HealthKit, pure: parseNativeDays() (answer of the `HealthDays` plugin, burnedKcal = active + basal), runNativeHealthSync() (read passed in), kcalBalance(), fmtBalance()
+src/healthKit.test.ts tests for it (plus burnedKcal in mergeHealth/isDayValuesList, the `healthKit` flag, the Health calls of native.ts)
 src/useHealthSync.ts hook: sync once when ready and on every return to the app; useSyncRunning()
 src/lockScreen.ts     parseTrainingPrefs() (meta key `training`); the lock-screen helpers in it are unused since #75
 src/lockScreen.test.ts tests for it
-src/native.ts        bridge to the native shell via window.Capacitor.nativePromise (rest notification, haptics, Live Activity for the rest through the `RestActivity` plugin, only when `isPluginAvailable` says so; nextSet()); no-op in the browser
+src/native.ts        bridge to the native shell via window.Capacitor.nativePromise (rest notification, haptics, Live Activity for the rest through the `RestActivity` plugin, only when `isPluginAvailable` says so; nextSet(); Apple Health through the `HealthDays` plugin: isNative(), healthAvailable(), requestHealth(), readHealthDays(), which pass errors on); no-op in the browser
 src/native.test.ts   tests for it
 src/nativeActivity.test.ts tests for the Live Activity calls and nextSet()
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Statistik, Plan), toast; swipe left/right switches tabs (not from the left edge, the calendar or horizontal scrollers; off in workout, subpages, inputs and confirms); Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt; today card with the body graphic of today's muscles; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar; finished trainings and cardio entries in the selected day's card can be deleted with an inline confirm), Workout (the active set, first open or last focused, has a −/+ line: reps 1, kg = slot increment or 2,5, seconds 5, never below 0), HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History (Statistik: Training with per-exercise cards grouped Pull/Push/Skills/Sonstiges, Alle Trainings, Ernährung with cards Körpergewicht (last 7 days), Kalorien and Protein (bars with goal line, tap → Schritte & Kalorien) and a weight subpage (curve + editable list), Cardio with "Cardio pro Woche" (8 weeks) plus the list), PlanEditor, Settings (profile, Darstellung, Training, Apple Health + Daten & Backup), HealthSection (server address, key, shortcut name, Verbindung testen, status, setup guide), BackupSection (export, import, "Alle Daten löschen" with a two-step inline confirm)
-src/components/      NumInput, RestTimer, LineChart (hand-written SVG; optional per-point value/date labels), BarChart (hand-written SVG bars with optional goal line), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Statistik and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training), BodyMap (detailed front/back muscle map on the Home today card, props only)
+src/screens/         Home (overview + weigh-in prompt; today card with the body graphic of today's muscles; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar; finished trainings and cardio entries in the selected day's card can be deleted with an inline confirm), Workout (the active set, first open or last focused, has a −/+ line: reps 1, kg = slot increment or 2,5, seconds 5, never below 0), HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History (Statistik: Training with per-exercise cards grouped Pull/Push/Skills/Sonstiges, Alle Trainings, Ernährung with cards Körpergewicht (last 7 days), Kalorien and Protein (bars with goal line, Kalorien with a muted line for burned kcal when a day has `burnedKcal`, tap → Schritte & Kalorien) and a weight subpage (curve + editable list), Cardio with "Cardio pro Woche" (8 weeks) plus the list), PlanEditor, Settings (profile, Darstellung, Training, Apple Health + Daten & Backup), HealthSection (server address, key, shortcut name, Verbindung testen, status, setup guide; in the native app instead: „Zugriff auf Apple Health erlauben“ button + status), BackupSection (export, import, "Alle Daten löschen" with a two-step inline confirm)
+src/components/      NumInput, RestTimer, LineChart (hand-written SVG; optional per-point value/date labels), BarChart (hand-written SVG bars with optional goal line and optional second series as a line), Habits (Home habit cards; „Kalorien heute“ shows „verbraucht … kcal · Bilanz …“ when today has `burnedKcal`), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Statistik and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training), BodyMap (detailed front/back muscle map on the Home today card, props only)
 src/bodyRegions.ts   mapping of our 13 muscle groups to body-map region ids, muscleOfRegion()
 src/bodyRegions.test.ts tests for it
 src/vendor/          third-party source copied in; bodyMuscles/ = SVG muscle paths from vulovix/body-muscles, Apache-2.0, keep LICENSE/NOTICE/header, see its README
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
-native/              Capacitor iOS shell (own package.json; `npm run build` builds `native/www` with base `/` and no service worker, plus rest.wav; `npm run sync` = build + cap sync ios; `native/www` and `native/ios` are gitignored; setup checklist in native/README.md; `native/ios-src/` = Swift sources (Live Activity plugin, widget), added to Xcode by hand, see README section 16)
+native/              Capacitor iOS shell (own package.json; `npm run build` builds `native/www` with base `/` and no service worker, plus rest.wav; `npm run sync` = build + cap sync ios; `native/www` and `native/ios` are gitignored; setup checklist in native/README.md; `native/ios-src/` = Swift sources (Live Activity plugin, widget, `HealthDays` HealthKit plugin), untested, added to Xcode by hand, see README sections 16 and 17; `native/MAC-HANDOFF.md` = handoff for Claude Code on the Mac)
 server/              standalone Cloudflare Worker relaying daily Health totals (own package.json with wrangler; not part of the app build; tests in server/src/*.test.ts run with the root npm test; setup in server/README.md)
 ```
 
@@ -157,15 +159,20 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   as "last time" for progression, also when it lies in the future.
 - Success screen: after "Speichern" (and the plan questions for added exercises) Workout shows a card "Training Nr. X erfolgreich absolviert" (for an entered day: "… für Mo 23.11. eingetragen"): X = finished strength sessions incl. this one (no cardio), duration, sets, reps, goals x/y, flames with +n gain, success sound; "Fertig" goes to Home.
 - Schritte & Kalorien: table `days`, one row per local day (YYYY-MM-DD) with
-  optional `steps`/`kcal`/`proteinG`, `source` `manual`|`health` and `updatedAt`.
-  Apple Health sync: the meta key `health` holds `{ url, token, shortcut }`, `healthStatus`
+  optional `steps`/`kcal`/`proteinG`, `source` `manual`|`health` and `updatedAt`, plus
+  optional `burnedKcal` (active + basal energy; Health only, never entered by hand, kept
+  on manual edits; Bilanz = kcal − burnedKcal).
+  Apple Health sync: the meta key `health` holds `{ url, token, shortcut }` plus the optional
+  flag `healthKit: true` (set after „Zugriff auf Apple Health erlauben“ in the native app), `healthStatus`
   holds `{ lastSync, error }`. The app fetches the last 30 days from the server once
   after start and on every return to the app (at most once per 60 s, in memory;
   "Jetzt aktualisieren" on the steps card runs the iOS shortcut and forces the next
   fetch). Manual protection is per field: the optional `manual` list on a row names
   the hand-entered fields, which Health never overwrites (legacy manual rows without
   a list count as all-manual). After saving, the app deletes the server's days until
-  yesterday. Sync errors show only in Settings → Apple Health, never on Home. Goals live in the meta key `goals` (defaults 2200 kcal /
+  yesterday. The native app never uses the server: with the `HealthDays` plugin and the
+  `healthKit` flag it reads the last 30 days from HealthKit under the same throttle and
+  manual rules (no delete step). Sync errors show only in Settings → Apple Health, never on Home. Goals live in the meta key `goals` (defaults 2200 kcal /
   160 g protein / 8000 steps, set under Einstellungen → Profil). Entry, curve and
   history with edit/delete are on the DayValues subpage, opened from the Home cards
   "Schritte heute" and "Kalorien heute".

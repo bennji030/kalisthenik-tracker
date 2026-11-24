@@ -81,6 +81,7 @@ export interface DayValues {
   steps?: number;
   kcal?: number;
   proteinG?: number;
+  burnedKcal?: number; // verbraucht (Aktiv- + Ruheenergie), nur aus Apple Health
   source: 'manual' | 'health';
   updatedAt: number; // ms
   manual?: DayField[]; // von Hand gesetzte Felder; Health überschreibt sie nicht

@@ -217,17 +217,20 @@ function DayBarCard({ title, unit, field, hint, days, goal, now, open }: {
   title: string; unit: string; field: 'kcal' | 'proteinG'; hint: string; days: DayValues[]; goal: number; now: number; open: () => void;
 }) {
   const bars = dayBars(days, field, now);
+  // Verbrauchte Kalorien als Linie, nur wenn es in den 7 Tagen welche gibt.
+  const burned = field === 'kcal' ? dayBars(days, 'burnedKcal', now).map((b) => b.value) : [];
+  const line = burned.some((v) => v !== null) ? burned : undefined;
   return (
     <button className="card stat-card" onClick={open}>
       <span className="stat-head">
         <span className="stat-name">
           <span className="stat-title">{title}</span>
-          <span className="muted small">Letzte 7 Tage · Ziel {fmtInt(goal)} {unit}</span>
+          <span className="muted small">Letzte 7 Tage · Ziel {fmtInt(goal)} {unit}{line && ' · Linie: verbraucht'}</span>
         </span>
       </span>
-      {bars.every((b) => b.value === null)
+      {bars.every((b) => b.value === null) && !line
         ? <p className="muted small">{hint} in den letzten 7 Tagen. Tippen zum Eintragen.</p>
-        : <BarChart label={`${title} der letzten 7 Tage in ${unit}`} goal={goal} fmt={fmtInt} bars={bars.map((b) => ({ label: WEEKDAYS[new Date(dayTs(b.date)).getDay()], value: b.value }))} />}
+        : <BarChart label={`${title} der letzten 7 Tage in ${unit}${line ? ', Linie: verbrauchte Kalorien' : ''}`} goal={goal} line={line} fmt={fmtInt} bars={bars.map((b) => ({ label: WEEKDAYS[new Date(dayTs(b.date)).getDay()], value: b.value }))} />}
     </button>
   );
 }

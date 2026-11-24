@@ -19,6 +19,10 @@ Das Terminal findest du unter Programme → Dienstprogramme → Terminal (oder
 - Die Live Activity (Pause auf dem Sperrbildschirm und in der Dynamic Island) ist
   ein eigener, **noch ungetesteter** Zusatz: siehe Abschnitt 16. Erst die
   Schritte 1 bis 11 erledigen.
+- Apple Health (Schritte, gegessene und verbrauchte Kalorien, Protein) liest die
+  native App direkt aus HealthKit, ohne Server und ohne Kurzbefehl. Auch das ist
+  **noch ungetestet**: siehe Abschnitt 17, nach Abschnitt 16.
+- Wer mit Claude Code auf dem Mac weitermacht: `native/MAC-HANDOFF.md` lesen.
 
 ## 2. Voraussetzungen
 
@@ -53,8 +57,11 @@ cd kalisthenik-tracker
 ```
 
 ```
-git checkout factory/039-native-app-teil-1
+git checkout factory/042-native-app-teil-3
 ```
+
+Dieser Branch enthält alle drei Teile: die App-Hülle (Schritte 1 bis 11), die
+Live Activity (Abschnitt 16) und Apple Health (Abschnitt 17).
 
 Dann die Git-Identität nur für diesen Ordner setzen (ohne `--global`). So
 landet bei einem späteren Commit nicht deine private E-Mail-Adresse im
@@ -230,8 +237,10 @@ Dann in Xcode auf ▶ klicken.
 - Mit einer kostenlosen Apple-ID läuft die App nach **7 Tagen** ab. Verlängern:
   iPhone per Kabel anschließen und in Xcode wieder ▶ drücken. Die Daten bleiben
   erhalten, solange die App nicht gelöscht wird.
-- Apple-Health-Sync funktioniert in der nativen App noch nicht: der Server erlaubt
-  nur die Web-Adresse. Das kommt in einem späteren Schritt.
+- Apple Health kommt in der nativen App direkt aus HealthKit und wird in Xcode
+  von Hand eingebaut: siehe Abschnitt 17 (**ungetestet**). Den Server und den
+  Kurzbefehl der Web-App nutzt die native App nicht. Ohne Abschnitt 17 trägt man
+  Schritte und Kalorien in der nativen App von Hand ein.
 - Die Live Activity (Pause auf dem Sperrbildschirm) ist **ungetestet** und wird
   in Xcode von Hand eingebaut: siehe Abschnitt 16.
 
@@ -265,7 +274,7 @@ So kommt der Fehlertext in den Chat:
 
 ## 16. Live Activity (Pause auf dem Sperrbildschirm)
 
-> **Achtung, ungetestet.** Die vier Swift-Dateien in `native/ios-src/` wurden
+> **Achtung, ungetestet.** Die Swift-Dateien in `native/ios-src/` wurden
 > ohne Mac geschrieben. Sie konnten weder kompiliert noch ausprobiert werden.
 > Kompiliert und nachgebessert wird erst hier auf dem Mac. Es ist also normal,
 > wenn Xcode beim ersten Versuch Fehler zeigt: den Fehlertext wie in Schritt 15
@@ -286,7 +295,7 @@ git fetch
 ```
 
 ```
-git checkout factory/040-native-app-teil-2
+git checkout factory/042-native-app-teil-3
 ```
 
 ```
@@ -331,12 +340,12 @@ Xcode hat links im Navigator eine neue Gruppe **RestWidget** angelegt.
 1. Links im Navigator Rechtsklick auf die Gruppe **App** (die mit
    `AppDelegate.swift` darin) → **Add Files to “App”…**
 2. Im Dateifenster zum Ordner `kalisthenik-tracker/native/ios-src` gehen und alle
-   vier Dateien markieren (⌘A).
+   fünf Dateien markieren (⌘A).
 3. Unten im Fenster: **Copy items if needed** muss **aus** sein (je nach
    Xcode-Version heißt die Auswahl „Action“: dann **Reference files in place**
    wählen). So holt ein späteres `git pull` Korrekturen automatisch.
 4. Auf **Add** klicken.
-5. Jetzt für jede der vier Dateien die Zugehörigkeit einstellen: Datei links
+5. Jetzt für jede der fünf Dateien die Zugehörigkeit einstellen: Datei links
    anklicken, rechts den File inspector öffnen (⌥⌘1), dort im Abschnitt **Target
    Membership** die Haken genau so setzen:
 
@@ -346,8 +355,14 @@ Xcode hat links im Navigator eine neue Gruppe **RestWidget** angelegt.
    | `RestActivityPlugin.swift` | an | aus |
    | `MainViewController.swift` | an | aus |
    | `RestActivityWidget.swift` | aus | an |
+   | `HealthDaysPlugin.swift` | an | aus |
 
    Fehlt ein Target in der Liste, dort auf `+` klicken und es hinzufügen.
+
+   `HealthDaysPlugin.swift` gehört zu Apple Health (Abschnitt 17). Die Datei muss
+   schon jetzt dabei sein, weil `MainViewController.swift` sie anmeldet. Die
+   übrigen Einstellungen für Health folgen in Abschnitt 17; bis dahin läuft die
+   App ohne Health.
 
 ### 16.5 Plugin anmelden
 
@@ -427,4 +442,133 @@ Ein Training starten, einen Satz abhaken und Punkt für Punkt prüfen:
 | Die Live Activity erscheint nicht | Der Reihe nach prüfen: iPhone → Einstellungen → Apps → Calisthenics → „Live-Aktivitäten“ an; `NSSupportsLiveActivities` = YES in der `Info.plist` der App (16.6); Custom Class `MainViewController` im Storyboard (16.5); `npm run sync` ausgeführt (16.1). |
 | „Unknown class MainViewController in Interface Builder file“ (unten in der Xcode-Konsole), App startet, aber keine Live Activity | Im Storyboard bei **Module** `App` eintragen, siehe 16.5, Punkt 5. Außerdem prüfen, dass `MainViewController.swift` zum Target App gehört. |
 | App startet, aber das Widget wird nicht installiert / Xcode meldet, die iOS-Version des iPhones sei zu alt | Das iPhone hat ein älteres iOS als bei Minimum Deployments eingestellt. iPhone aktualisieren (mindestens iOS 17). |
-| Ein anderer Swift-Fehler in einer der vier Dateien | Erwartbar, die Dateien sind ungetestet. Fehlertext und Dateiname wie in Schritt 15 in den Chat kopieren. |
+| „Cannot find 'HealthDaysPlugin' in scope“ | `HealthDaysPlugin.swift` fehlt im Projekt oder gehört nicht zum Target App. Hinzufügen und Haken setzen, siehe 16.4. |
+| Ein anderer Swift-Fehler in einer der fünf Dateien | Erwartbar, die Dateien sind ungetestet. Fehlertext und Dateiname wie in Schritt 15 in den Chat kopieren. |
+
+## 17. Apple Health (HealthKit)
+
+> **Achtung, ungetestet.** `HealthDaysPlugin.swift` in `native/ios-src/` wurde
+> ohne Mac geschrieben. Die Datei konnte weder kompiliert noch ausprobiert werden.
+> Kompiliert und nachgebessert wird erst hier auf dem Mac. Es ist also normal,
+> wenn Xcode beim ersten Versuch Fehler zeigt: den Fehlertext wie in Schritt 15
+> in den Chat kopieren, dann wird die Datei korrigiert.
+
+Die native App liest Schritte, gegessene Kalorien, Protein und verbrauchte
+Kalorien (Aktivenergie + Ruheenergie) direkt aus Apple Health. Sie liest nur, sie
+schreibt nichts in Health. Server und Kurzbefehl der Web-App braucht sie nicht.
+
+**Voraussetzung:** Abschnitt 16 ist erledigt, die App läuft mit Live Activity auf
+dem iPhone. Die Reihenfolge ist: Teil 1 (Schritte 1 bis 11) → Live Activity
+(Abschnitt 16) → Apple Health (dieser Abschnitt).
+
+### 17.1 Code holen
+
+Im Ordner `kalisthenik-tracker`:
+
+```
+git pull
+```
+
+```
+cd native
+```
+
+```
+npm run sync
+```
+
+```
+npx cap open ios
+```
+
+### 17.2 Datei hinzufügen (nur falls sie fehlt)
+
+Steht `HealthDaysPlugin.swift` in Xcode schon links in der Gruppe **App**, weiter
+mit 17.3. Sie fehlt, wenn Abschnitt 16.4 noch mit vier Dateien gemacht wurde.
+
+1. Links im Navigator Rechtsklick auf die Gruppe **App** (die mit
+   `AppDelegate.swift` darin) → **Add Files to “App”…**
+2. Im Ordner `kalisthenik-tracker/native/ios-src` die Datei
+   `HealthDaysPlugin.swift` auswählen.
+3. **Copy items if needed** muss **aus** sein (oder bei „Action“ **Reference
+   files in place** wählen).
+4. Auf **Add** klicken.
+5. Datei links anklicken, rechts im File inspector (⌥⌘1) unter **Target
+   Membership**: **App** an, **RestWidget** aus.
+
+### 17.3 HealthKit einschalten
+
+1. Links ganz oben das Projekt **App** anklicken → unter „Targets“ **App** →
+   Reiter **Signing & Capabilities**.
+2. Oben links auf **+ Capability** klicken.
+3. „HealthKit“ tippen und **HealthKit** doppelt anklicken.
+4. Im neuen Abschnitt **HealthKit** bleiben beide Haken **aus**: kein „Clinical
+   Health Records“, kein „Background Delivery“.
+
+Das Target **RestWidget** bekommt **kein** HealthKit.
+
+### 17.4 Erklärtext für die Abfrage eintragen
+
+1. Links im Navigator `App` → `App` → `Info.plist` anklicken.
+2. Mit der Maus über eine Zeile fahren und auf das `+` klicken.
+3. Als Schlüssel `NSHealthShareUsageDescription` eintippen (Xcode zeigt danach
+   „Privacy - Health Share Usage Description“), Typ **String**.
+4. Als Wert diesen Text eintragen:
+
+   ```
+   Calisthenics liest Schritte, gegessene und verbrauchte Kalorien sowie Protein aus Apple Health und zeigt sie in der App an.
+   ```
+
+Ohne diesen Eintrag stürzt die App ab, sobald man den Zugriff erlauben will.
+
+### 17.5 MyFitnessPal schreibt an Health
+
+In der App **MyFitnessPal**: Mehr → Einstellungen → „Apps & Geräte“ → „Health“.
+Dort „Nahrungsenergie“ und „Protein“ einschalten, damit MyFitnessPal sie an
+Health schreibt.
+
+### 17.6 Starten und Zugriff erlauben
+
+1. In Xcode das Schema **App** und das eigene iPhone auswählen, dann ▶ (⌘R).
+2. In der App: Einstellungen (Zahnrad auf Home) → **Apple Health** → **Zugriff
+   auf Apple Health erlauben**.
+3. iOS zeigt ein Blatt mit den Kategorien. **Alle aktivieren** antippen (Schritte,
+   Nahrungsenergie, Protein, Aktivenergie, Ruheenergie), dann **Erlauben**.
+4. Unter dem Knopf steht danach „Apple Health verbunden“, darüber „Letzte
+   Aktualisierung: …“.
+
+Danach holt die App die Werte von selbst: beim Start und bei jeder Rückkehr in
+die App, höchstens einmal pro Minute.
+
+### 17.7 Testliste
+
+1. **Schritte**: Home → „Schritte heute“ zeigt dieselbe Zahl wie die Health-App
+   (Entdecken → Aktivität → Schritte, Tagessumme von heute).
+2. **Gegessene Kalorien und Protein**: Home → „Kalorien heute“ zeigt die Werte
+   aus MyFitnessPal (in der Health-App: Entdecken → Ernährung → Nahrungsenergie
+   und Protein).
+3. **Verbraucht**: die Zeile „verbraucht … kcal“ auf der Karte „Kalorien heute“
+   ist Aktivenergie + Ruheenergie von heute (Health-App: Entdecken → Aktivität).
+4. **Bilanz**: daneben steht „Bilanz“ = gegessen minus verbraucht, z. B.
+   2.200 − 2.650 = „Bilanz −450“.
+5. **Statistik**: Statistik → Ernährung → Karte „Kalorien“ zeigt zusätzlich eine
+   graue Linie mit Punkten (verbraucht), im Untertitel steht „Linie: verbraucht“.
+6. **Von Hand eingetragen bleibt**: unter „Schritte & Kalorien“ für heute einen
+   anderen Kalorienwert eintragen. Die App verlassen, länger als 60 Sekunden
+   warten, zurückkehren → der eingetragene Wert steht noch da.
+7. **Flugmodus**: Flugmodus einschalten, App neu öffnen → alles funktioniert wie
+   vorher.
+
+### 17.8 Typische Fehler bei Apple Health
+
+| Symptom | Was tun |
+| --- | --- |
+| „Personal development teams … do not support the HealthKit capability“ oder HealthKit lässt sich nicht hinzufügen | Mit einer kostenlosen Apple-ID (Personal Team) erlaubt Apple HealthKit nicht. Zwei Wege: das bezahlte **Apple Developer Program** (99 $ im Jahr) abschließen und dessen Team in Schritt 6 wählen. Oder die Capability HealthKit wieder entfernen (im Reiter Signing & Capabilities auf das `x` am Abschnitt HealthKit klicken): die App läuft dann ganz normal weiter, Schritte und Kalorien trägt man von Hand ein. Die Fehlermeldung dazu steht nur unter Einstellungen → Apple Health. |
+| „Zugriff auf Apple Health nicht möglich“ in der App, in der Xcode-Konsole „Missing com.apple.developer.healthkit entitlement“ | Die Capability HealthKit fehlt beim Target App. Hinzufügen, siehe 17.3, dann wieder ▶. |
+| App stürzt ab, sobald man „Zugriff auf Apple Health erlauben“ antippt | `NSHealthShareUsageDescription` fehlt in der `Info.plist` der App. Eintragen, siehe 17.4. |
+| „Apple Health ist in dieser App-Version nicht eingebaut.“ in der App | Das Plugin ist nicht angemeldet: `HealthDaysPlugin.swift` gehört zum Target App (17.2), Custom Class `MainViewController` im Storyboard (16.5), `npm run sync` ausgeführt (17.1). |
+| Alle Werte bleiben leer, obwohl „Apple Health verbunden“ dasteht | Die Freigabe fehlt. iPhone → Health-App → Profilbild oben rechts → **Apps** → **Calisthenics** → alle Kategorien einschalten. Für Kalorien und Protein außerdem die MyFitnessPal-Einstellung prüfen (17.5). iOS verrät der App nicht, ob das Lesen abgelehnt wurde: sie sieht dann einfach keine Werte. |
+| Nur „verbraucht“ fehlt | Die Zeile erscheint erst, wenn Health für den Tag Aktivenergie **und** Ruheenergie hat. Beides in der Health-App freigeben (siehe Zeile darüber). |
+| „Cannot find 'HealthDaysPlugin' in scope“ | `HealthDaysPlugin.swift` fehlt im Projekt oder gehört nicht zum Target App. Siehe 17.2. |
+| „No such module 'Capacitor'“ in `HealthDaysPlugin.swift` | Die Datei gehört fälschlich zum Target RestWidget. Haken dort entfernen, siehe 17.2, Punkt 5. |
+| Ein anderer Swift-Fehler in `HealthDaysPlugin.swift` | Erwartbar, die Datei ist ungetestet. Fehlertext und Dateiname wie in Schritt 15 in den Chat kopieren. |

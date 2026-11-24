@@ -46,6 +46,10 @@ export interface Native {
   startRest(endAt: number, exercise: string, set: string, now?: number): Promise<void>;
   updateRest(endAt: number, now?: number): Promise<void>;
   endRest(): Promise<void>;
+  isNative(): boolean;
+  healthAvailable(): boolean;
+  requestHealth(): Promise<void>;
+  readHealthDays(since: string): Promise<unknown>;
 }
 
 export function createNative(bridge: Bridge | null): Native {
@@ -62,6 +66,9 @@ export function createNative(bridge: Bridge | null): Native {
   const activity = (method: string, options?: unknown): Promise<void> =>
     bridge?.isPluginAvailable?.('RestActivity') === true ? call('RestActivity', method, options) : Promise.resolve();
   const endRest = () => activity('endRest');
+  // Apple Health: ohne die Warteschlange, damit Fehler und Antworten beim Aufrufer ankommen (native/README.md, Abschnitt 17).
+  const healthAvailable = () => bridge?.isPluginAvailable?.('HealthDays') === true;
+  const missing = () => Promise.reject(new Error('HealthDays fehlt'));
   return {
     requestPermission() {
       if (!bridge || asked) return Promise.resolve();
@@ -91,6 +98,11 @@ export function createNative(bridge: Bridge | null): Native {
       return activity('updateRest', { endsAt: endAt });
     },
     endRest,
+    isNative: () => bridge !== null,
+    healthAvailable,
+    requestHealth: () =>
+      bridge && healthAvailable() ? bridge.nativePromise('HealthDays', 'requestAuthorization').then(() => undefined) : missing(),
+    readHealthDays: (since) => (bridge && healthAvailable() ? bridge.nativePromise('HealthDays', 'readDays', { since }) : missing()),
   };
 }
 

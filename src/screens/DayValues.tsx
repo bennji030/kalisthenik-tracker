@@ -151,6 +151,7 @@ function DayRow({ d }: { d: DayRowData }) {
     if (v.steps != null) next.steps = v.steps;
     if (v.kcal != null) next.kcal = v.kcal;
     if (v.proteinG != null) next.proteinG = v.proteinG;
+    if (d.burnedKcal != null) next.burnedKcal = d.burnedKcal;
     next.manual = nextManual(d, next);
     await db.days.put(next);
     close();

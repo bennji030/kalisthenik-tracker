@@ -4,6 +4,7 @@ import { dotGrid, lastDayKeys, sessionDayKeys, weekDayCount, weekSessionCount } 
 import { WeightCard } from './Weight';
 import { cardioOnly, strengthOnly } from '../cardio';
 import { goalProgress, parseGoals, stepsWeek, type Goals } from '../dayValues';
+import { fmtBalance, kcalBalance } from '../healthKit';
 import { fmtInt } from '../util';
 import { dayKey } from '../weight';
 import { isConfigured, parseHealthConfig, shortcutUrl } from '../health';
@@ -104,6 +105,10 @@ function KcalCard({ today, goals, onOpen, goSettings }: {
   const R = 22, C = 2 * Math.PI * R;
   const fill = goalProgress(kcal, goals.kcal);
   const show = (n: number | null) => (n == null ? '–' : fmtInt(n));
+  const bal = kcalBalance(today);
+  const burned = bal && `verbraucht ${fmtInt(bal.burned)} kcal`;
+  const balance = bal?.balance != null ? `Bilanz ${fmtBalance(bal.balance)}` : null;
+  const said = burned ? `, ${burned}${balance ? `, ${balance}` : ''}` : '';
   return (
     <section className="habit">
       <div className="habit-title">Kalorien heute</div>
@@ -126,12 +131,13 @@ function KcalCard({ today, goals, onOpen, goSettings }: {
           <div className="small">Protein <b className="habit-val">{show(protein)}</b> <span className="muted">/ {fmtInt(goals.proteinG)} g</span></div>
         </>
       )}
+      {burned && <div className="muted small">{burned}{balance && ` · ${balance}`}</div>}
       <button
         className="habit-hit"
         onClick={onOpen}
         aria-label={empty
-          ? 'Kalorien heute: noch keine, Verlauf öffnen'
-          : `Kalorien heute: ${show(kcal)} von ${fmtInt(goals.kcal)} kcal, Protein ${show(protein)} von ${fmtInt(goals.proteinG)} g, Verlauf öffnen`}
+          ? `Kalorien heute: noch keine${said}, Verlauf öffnen`
+          : `Kalorien heute: ${show(kcal)} von ${fmtInt(goals.kcal)} kcal, Protein ${show(protein)} von ${fmtInt(goals.proteinG)} g${said}, Verlauf öffnen`}
       />
     </section>
   );
