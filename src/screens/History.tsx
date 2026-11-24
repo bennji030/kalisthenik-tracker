@@ -59,7 +59,7 @@ function SessionCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> })
           {!del ? (
             <button className="btn btn-small btn-ghost danger" onClick={() => setDel(true)}>Training löschen</button>
           ) : (
-            <div className="row">
+            <div className="row" data-no-swipe>
               <button className="btn btn-small btn-danger" onClick={() => db.sessions.delete(s.id)}>Wirklich löschen</button>
               <button className="btn btn-small" onClick={() => setDel(false)}>Abbrechen</button>
             </div>
@@ -170,7 +170,7 @@ function WeightRow({ r }: { r: WeightPoint }) {
         <button className="btn btn-small btn-primary" disabled={!isValidKg(kg)} onClick={async () => { await saveWeight(r.date, kg!); close(); }}>Speichern</button>
         <button className="btn btn-small" onClick={close}>Abbrechen</button>
       </div>
-      <div className="row">
+      <div className="row" data-no-swipe>
         {!del ? (
           <button className="btn btn-small btn-ghost danger" onClick={() => setDel(true)}>Löschen</button>
         ) : (

@@ -1,10 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { getMeta } from './db';
 import { applyTheme, parseThemePref, resolveTheme } from './theme';
 import { seedIfEmpty } from './seed';
 import { ensureCardioDayInDb } from './cardio';
 import { activeSession } from './sessions';
+import { adjacentTab } from './tabSwipe';
+import { useTabSwipe } from './useTabSwipe';
 import { Home } from './screens/Home';
 import { Training } from './screens/Training';
 import { Workout } from './screens/Workout';
@@ -14,6 +16,9 @@ import { HabitMonths, type HabitKind } from './screens/HabitMonths';
 import { Settings } from './screens/Settings';
 
 type Tab = 'home' | 'training' | 'history' | 'plan';
+
+const TABS: readonly (readonly [Tab, string])[] = [['home', 'Home'], ['training', 'Training'], ['history', 'Verlauf'], ['plan', 'Plan']];
+const ORDER = TABS.map(([t]) => t);
 
 const ICONS: Record<Tab, ReactNode> = {
   home: <path d="M4 11.5 12 5l8 6.5M6 10v9h12v-9M10 19v-5h4v5" />,
@@ -30,6 +35,7 @@ export function App() {
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [habitView, setHabitView] = useState<HabitKind | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     void (async () => {
@@ -61,6 +67,12 @@ export function App() {
     setTimeout(() => setToastMsg(null), 2600);
   };
 
+  const swipeActive = ready && !workoutId && !settings && !habitView;
+  useTabSwipe(mainRef, swipeActive, (dir) => adjacentTab(ORDER, tab, dir) !== null, (dir) => {
+    const next = adjacentTab(ORDER, tab, dir);
+    if (next) go(next);
+  });
+
   if (!ready) return null;
 
   const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHabitView(null); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
@@ -70,7 +82,7 @@ export function App() {
 
   return (
     <>
-      <main>
+      <main ref={mainRef}>
         {workoutId ? (
           <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
         ) : settings ? (
@@ -90,7 +102,7 @@ export function App() {
       </main>
       {!workoutId && (
         <nav className="tabbar">
-          {([['home', 'Home'], ['training', 'Training'], ['history', 'Verlauf'], ['plan', 'Plan']] as const).map(([t, label]) => (
+          {TABS.map(([t, label]) => (
             <button key={t} className={tab === t ? 'on' : ''} onClick={() => go(t)}>
               <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true">{ICONS[t]}</svg>
               <span>{label}</span>
