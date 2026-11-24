@@ -92,7 +92,7 @@ export function App() {
     <>
       <main ref={mainRef}>
         {workoutId ? (
-          <Workout sessionId={workoutId} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
+          <Workout sessionId={workoutId} onDone={() => go('home')} onClose={(m) => { setWorkoutId(null); if (m) toast(m); window.scrollTo(0, 0); }} />
         ) : settings ? (
           <Settings toast={toast} onBack={() => go('home')} goHistory={goHistory} />
         ) : tab === 'home' && habitView ? (

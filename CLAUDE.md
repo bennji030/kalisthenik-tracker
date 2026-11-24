@@ -62,6 +62,8 @@ src/addedExercise.ts exercises added during a workout: DEFAULT_SLOT, addedEntry(
 src/addedExercise.test.ts tests for it (plus suggest() after a free entry)
 src/cardio.ts        cardio day: strength/cardio filters, cardioSummary(), logCardio(), one-time ensureCardioDay() (meta flag `cardioDay`)
 src/cardio.test.ts   tests for it
+src/finishSummary.ts  success screen after "Training beenden": trainingNumber(), flameGain(), sessionStats(), backdatedLabel()
+src/finishSummary.test.ts tests for it
 src/entryDay.ts      entering a training for another day: entryNoon(), defaultTemplate(), entryTimes()
 src/entryDay.test.ts tests for it
 src/muscles.ts       muscle groups (13, German labels), parseMuscles(), defaultMuscles() by name, one-time ensureMuscleDefaults() (meta flag `muscleDefaults`), muscleLoad() weighted by sets
@@ -136,6 +138,7 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   eintragen"). They are stored at 12:00 of that day plus the real duration (meta
   `entryDay` holds the chosen day while the workout runs); the newest date counts
   as "last time" for progression, also when it lies in the future.
+- Success screen: after "Speichern" (and the plan questions for added exercises) Workout shows a card "Training Nr. X erfolgreich absolviert" (for an entered day: "… für Mo 23.11. eingetragen"): X = finished strength sessions incl. this one (no cardio), duration, sets, reps, goals x/y, flames with +n gain, success sound; "Fertig" goes to Home.
 - Schritte & Kalorien: table `days`, one row per local day (YYYY-MM-DD) with
   optional `steps`/`kcal`/`proteinG`, `source` `manual`|`health` and `updatedAt`.
   Apple Health sync: the meta key `health` holds `{ url, token, shortcut }`, `healthStatus`
