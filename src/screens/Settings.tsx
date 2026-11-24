@@ -26,7 +26,7 @@ export function Settings({ toast, onBack, goHistory }: {
       {stored && <ProfileCard profile={parseProfile(stored.value, Date.now())} goHistory={goHistory} />}
       <ThemeCard />
       <HealthSection toast={toast} />
-      <BackupSection toast={toast} />
+      <BackupSection toast={toast} onReset={onBack} />
     </div>
   );
 }
