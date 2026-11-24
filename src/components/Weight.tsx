@@ -52,7 +52,7 @@ export function WeighPrompt({ accent }: { accent: boolean }) {
   );
 }
 
-/** Home-Karte: 7-Tage-Schnitt und Kurve der letzten 30 Tage; öffnet Verlauf → Gewicht. */
+/** Home-Karte: 7-Tage-Schnitt und Kurve der letzten 30 Tage; öffnet Statistik → Ernährung. */
 export function WeightCard({ entries, onOpen }: { entries: WeightEntry[]; onOpen: () => void }) {
   return (
     <section className="habit habit-weight">
@@ -65,7 +65,7 @@ export function WeightCard({ entries, onOpen }: { entries: WeightEntry[]; onOpen
       ) : (
         <p className="muted small">Noch kein Gewicht, trag morgen früh dein erstes ein.</p>
       )}
-      <button className="habit-hit" onClick={onOpen} aria-label="Gewicht, Verlauf öffnen" />
+      <button className="habit-hit" onClick={onOpen} aria-label="Gewicht, Statistik öffnen" />
     </section>
   );
 }

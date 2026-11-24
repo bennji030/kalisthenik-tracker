@@ -19,7 +19,7 @@ import { DayValues, type DayView } from './screens/DayValues';
 
 type Tab = 'home' | 'training' | 'history' | 'plan';
 
-const TABS: readonly (readonly [Tab, string])[] = [['home', 'Home'], ['training', 'Training'], ['history', 'Verlauf'], ['plan', 'Plan']];
+const TABS: readonly (readonly [Tab, string])[] = [['home', 'Home'], ['training', 'Training'], ['history', 'Statistik'], ['plan', 'Plan']];
 const ORDER = TABS.map(([t]) => t);
 
 const ICONS: Record<Tab, ReactNode> = {
@@ -32,7 +32,7 @@ const ICONS: Record<Tab, ReactNode> = {
 export function App() {
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
-  const [historyTab, setHistoryTab] = useState<HistoryTab>('sessions');
+  const [historyTab, setHistoryTab] = useState<HistoryTab>('training');
   const [settings, setSettings] = useState(false);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [habitView, setHabitView] = useState<HabitKind | null>(null);
@@ -80,7 +80,7 @@ export function App() {
 
   if (!ready) return null;
 
-  const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHabitView(null); setDayView(null); setHistoryTab('sessions'); setTab(t); window.scrollTo(0, 0); };
+  const go = (t: Tab) => { setWorkoutId(null); setSettings(false); setHabitView(null); setDayView(null); setHistoryTab('training'); setTab(t); window.scrollTo(0, 0); };
 
   const openSettings = () => { setSettings(true); window.scrollTo(0, 0); };
   const goHistory = (t: HistoryTab) => { go('history'); setHistoryTab(t); };
@@ -99,11 +99,13 @@ export function App() {
         ) : tab === 'home' ? (
           <Home goTraining={() => go('training')} goSettings={openSettings} goHabit={(k) => { setHabitView(k); window.scrollTo(0, 0); }}
             goDay={(v) => { setDayView(v); window.scrollTo(0, 0); }}
-            openWorkout={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goWeight={() => goHistory('weights')} />
+            openWorkout={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goWeight={() => goHistory('nutrition')} />
         ) : tab === 'training' ? (
           <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
+        ) : tab === 'history' && dayView ? (
+          <DayValues view={dayView} toast={toast} onBack={() => { setDayView(null); window.scrollTo(0, 0); }} />
         ) : tab === 'history' ? (
-          <History initialTab={historyTab} />
+          <History initialTab={historyTab} goDay={(v) => { setHistoryTab('nutrition'); setDayView(v); window.scrollTo(0, 0); }} />
         ) : tab === 'plan' ? (
           <PlanScreen />
         ) : null}
@@ -111,7 +113,7 @@ export function App() {
       {!workoutId && (
         <nav className="tabbar">
           {TABS.map(([t, label]) => (
-            <button key={t} className={tab === t ? (t === 'home' && (settings || habitView || dayView) ? 'sub' : 'on') : ''} onClick={() => go(t)}>
+            <button key={t} className={tab === t ? ((t === 'home' && (settings || habitView || dayView)) || (t === 'history' && dayView) ? 'sub' : 'on') : ''} onClick={() => go(t)}>
               <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true">{ICONS[t]}</svg>
               <span>{label}</span>
             </button>

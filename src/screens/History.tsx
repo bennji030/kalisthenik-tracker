@@ -1,40 +1,53 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, saveWeight, type Exercise, type Session } from '../db';
+import { db, saveWeight, type Exercise, type Session, type Template } from '../db';
 import { LineChart } from '../components/LineChart';
 import { NumInput } from '../components/NumInput';
 import { WeightStats } from '../components/Weight';
 import { SessionLog } from '../components/SessionLog';
-import { cardioSummary, isCardioSession } from '../cardio';
+import { cardioOnly, cardioSummary, isCardioSession, strengthOnly } from '../cardio';
+import { exerciseGroup, exerciseOrder, exerciseWindow, fmtChange, GROUPS, WINDOW, windowChange } from '../stats';
+import type { DayView } from './DayValues';
 import { fmtDate, fmtShortDate, summarizeSets } from '../util';
 import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
-export type HistoryTab = 'sessions' | 'exercises' | 'weights';
+export type HistoryTab = 'training' | 'nutrition' | 'cardio' | 'sessions';
 
-export function History({ initialTab = 'sessions' }: { initialTab?: HistoryTab }) {
+export function History({ initialTab = 'training', goDay }: { initialTab?: HistoryTab; goDay: (v: DayView) => void }) {
   const [tab, setTab] = useState<HistoryTab>(initialTab);
   const sessions = useLiveQuery(
     async () => (await db.sessions.toArray()).filter((s) => s.finishedAt).sort((a, b) => b.startedAt - a.startedAt),
     [],
   );
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
-  if (!sessions || !exercises) return <div className="screen" />;
+  const templates = useLiveQuery(() => db.templates.toArray(), []);
+  if (!sessions || !exercises || !templates) return <div className="screen" />;
   const exMap = new Map(exercises.map((e) => [e.id, e]));
+  const seg = tab === 'sessions' ? 'training' : tab;
 
   return (
     <div className="screen">
-      <h1>Verlauf</h1>
+      <h1>Statistik</h1>
       <div className="seg">
-        <button className={tab === 'sessions' ? 'on' : ''} onClick={() => setTab('sessions')}>Trainings</button>
-        <button className={tab === 'exercises' ? 'on' : ''} onClick={() => setTab('exercises')}>Übungen</button>
-        <button className={tab === 'weights' ? 'on' : ''} onClick={() => setTab('weights')}>Gewicht</button>
+        <button className={seg === 'training' ? 'on' : ''} onClick={() => setTab('training')}>Training</button>
+        <button className={seg === 'nutrition' ? 'on' : ''} onClick={() => setTab('nutrition')}>Ernährung</button>
+        <button className={seg === 'cardio' ? 'on' : ''} onClick={() => setTab('cardio')}>Cardio</button>
       </div>
-      {tab !== 'weights' && sessions.length === 0 && <p className="muted">Noch keine abgeschlossenen Trainings.</p>}
-      {tab === 'sessions'
-        ? <div className="cards">{sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)}</div>
-        : tab === 'exercises'
-          ? <ExerciseList sessions={sessions} exercises={exercises} />
-          : <WeightHistory />}
+      {tab === 'sessions' ? (
+        <>
+          <button className="btn btn-ghost link-btn" onClick={() => setTab('training')}>‹ Statistik</button>
+          <div className="cards">{sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)}</div>
+        </>
+      ) : tab === 'training'
+        ? <TrainingStats sessions={strengthOnly(sessions)} exercises={exercises} templates={templates} openAll={() => setTab('sessions')} />
+        : tab === 'cardio'
+          ? <CardioList sessions={cardioOnly(sessions)} />
+          : (
+            <>
+              <button className="btn btn-ghost link-btn" onClick={() => goDay('kcal')}>Schritte & Kalorien</button>
+              <WeightHistory />
+            </>
+          )}
     </div>
   );
 }
@@ -70,52 +83,103 @@ function SessionCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> })
   );
 }
 
-function ExerciseList({ sessions, exercises }: { sessions: Session[]; exercises: Exercise[] }) {
+function TrainingStats({ sessions, exercises, templates, openAll }: { sessions: Session[]; exercises: Exercise[]; templates: Template[]; openAll: () => void }) {
   const [sel, setSel] = useState<string | null>(null);
-  const used = exercises.filter((ex) => sessions.some((s) => s.entries.some((e) => e.exerciseId === ex.id && e.sets.some((x) => x.done))));
+  const used = exerciseOrder(
+    exercises.filter((ex) => sessions.some((s) => s.entries.some((e) => e.exerciseId === ex.id && e.sets.some((x) => x.done)))),
+    templates,
+  );
   const ex = used.find((e) => e.id === sel);
 
-  if (ex) {
-    const rows = sessions
-      .flatMap((s) => s.entries.filter((e) => e.exerciseId === ex.id).map((e) => ({ s, e, sets: e.sets.filter((x) => x.done) })))
-      .filter((r) => r.sets.length)
-      .sort((a, b) => a.s.startedAt - b.s.startedAt);
-    const metric = (sets: typeof rows[number]['sets']) =>
-      ex.type === 'weighted' ? Math.max(...sets.map((x) => x.weight ?? 0))
-        : ex.type === 'hold' ? Math.max(...sets.map((x) => x.sec ?? 0))
-          : sets.reduce((n, x) => n + (x.reps ?? 0), 0);
-    const unit = ex.type === 'weighted' ? 'kg' : ex.type === 'hold' ? 's (bester Satz)' : 'Wdh. gesamt';
-    const volume = (sets: typeof rows[number]['sets']) => sets.reduce((n, x) => n + (x.reps ?? 0), 0);
-    return (
-      <>
-        <button className="btn btn-ghost" onClick={() => setSel(null)}>‹ Alle Übungen</button>
-        <section className="card">
-          <h2>{ex.name}</h2>
-          <p className="muted small">{unit}</p>
-          <LineChart unit={unit} points={rows.map((r) => ({ x: r.s.startedAt, y: metric(r.sets), label: fmtShortDate(r.s.startedAt) }))} />
-          {ex.type === 'weighted' && (
-            <>
-              <p className="muted small">Wiederholungen gesamt</p>
-              <LineChart unit="Wdh." points={rows.map((r) => ({ x: r.s.startedAt, y: volume(r.sets), label: fmtShortDate(r.s.startedAt) }))} />
-            </>
-          )}
-          <ul className="log">
-            {[...rows].reverse().map((r) => (
-              <li key={r.s.id + r.e.slotId}>
-                <span>{fmtDate(r.s.startedAt)}</span>
-                <span className="muted">{summarizeSets(r.sets, ex.type)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </>
-    );
-  }
+  if (ex) return <ExerciseDetail ex={ex} sessions={sessions} back={() => setSel(null)} />;
 
+  if (used.length === 0) return <p className="muted">Noch keine abgeschlossenen Trainings.</p>;
+  const groupOf = new Map(used.map((e) => [e.id, exerciseGroup(e.id, sessions, templates)]));
+  return (
+    <>
+      {GROUPS.map(([g, title]) => {
+        const items = used.filter((e) => groupOf.get(e.id) === g);
+        if (items.length === 0) return null;
+        return (
+          <section key={g} className="stat-group">
+            <h2 className="stat-heading">{title}</h2>
+            <div className="cards">{items.map((e) => <ExerciseCard key={e.id} ex={e} sessions={sessions} open={() => setSel(e.id)} />)}</div>
+          </section>
+        );
+      })}
+      <button className="btn btn-ghost link-btn" onClick={openAll}>Alle Trainings</button>
+    </>
+  );
+}
+
+function ExerciseCard({ ex, sessions, open }: { ex: Exercise; sessions: Session[]; open: () => void }) {
+  const win = exerciseWindow(sessions, ex);
+  const change = windowChange(win);
+  const sub = win.length === 1 ? 'Letztes Training' : win.length < WINDOW ? `Letzte ${win.length} Trainings` : `Letzte ${WINDOW} Trainings`;
+  return (
+    <section className="card stat-card">
+      <button className="stat-head" onClick={open}>
+        <span className="stat-name">
+          <span className="stat-title">{ex.name}</span>
+          <span className="muted small">{sub}</span>
+        </span>
+        {change !== null && <span className={`stat-change ${change > 0 ? 'up' : change < 0 ? 'down' : ''}`}>{fmtChange(change, ex.type)}</span>}
+      </button>
+      <LineChart unit={UNIT[ex.type]} pointLabels
+        points={win.map((p, i) => ({ x: i, y: p.value, label: fmtShortDate(p.ts) }))}
+        emptyText="Ab zwei Trainings gibt es hier eine Kurve." />
+    </section>
+  );
+}
+
+const UNIT = { weighted: 'kg', reps: 'Wdh.', hold: 's' } as const;
+
+function ExerciseDetail({ ex, sessions, back }: { ex: Exercise; sessions: Session[]; back: () => void }) {
+  const rows = sessions
+    .flatMap((s) => s.entries.filter((e) => e.exerciseId === ex.id).map((e) => ({ s, e, sets: e.sets.filter((x) => x.done) })))
+    .filter((r) => r.sets.length)
+    .sort((a, b) => a.s.startedAt - b.s.startedAt);
+  const metric = (sets: typeof rows[number]['sets']) =>
+    ex.type === 'weighted' ? Math.max(...sets.map((x) => x.weight ?? 0))
+      : ex.type === 'hold' ? Math.max(...sets.map((x) => x.sec ?? 0))
+        : sets.reduce((n, x) => n + (x.reps ?? 0), 0);
+  const unit = ex.type === 'weighted' ? 'kg' : ex.type === 'hold' ? 's (bester Satz)' : 'Wdh. gesamt';
+  const volume = (sets: typeof rows[number]['sets']) => sets.reduce((n, x) => n + (x.reps ?? 0), 0);
+  return (
+    <>
+      <button className="btn btn-ghost link-btn" onClick={back}>‹ Statistik</button>
+      <section className="card">
+        <h2>{ex.name}</h2>
+        <p className="muted small">{unit}</p>
+        <LineChart unit={unit} points={rows.map((r) => ({ x: r.s.startedAt, y: metric(r.sets), label: fmtShortDate(r.s.startedAt) }))} />
+        {ex.type === 'weighted' && (
+          <>
+            <p className="muted small">Wiederholungen gesamt</p>
+            <LineChart unit="Wdh." points={rows.map((r) => ({ x: r.s.startedAt, y: volume(r.sets), label: fmtShortDate(r.s.startedAt) }))} />
+          </>
+        )}
+        <ul className="log">
+          {[...rows].reverse().map((r) => (
+            <li key={r.s.id + r.e.slotId}>
+              <span>{fmtDate(r.s.startedAt)}</span>
+              <span className="muted">{summarizeSets(r.sets, ex.type)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+function CardioList({ sessions }: { sessions: Session[] }) {
+  if (sessions.length === 0) return <p className="muted">Noch keine Cardio-Einträge. Abhaken geht auf Home oder im Training-Tab.</p>;
   return (
     <ul className="list">
-      {used.map((e) => (
-        <li key={e.id}><button onClick={() => setSel(e.id)}>{e.name}<span className="muted">›</span></button></li>
+      {sessions.map((s) => (
+        <li key={s.id} className="cardio-row">
+          <span>{fmtDate(s.startedAt, true)}</span>
+          <span className="muted">{cardioSummary(s)}</span>
+        </li>
       ))}
     </ul>
   );

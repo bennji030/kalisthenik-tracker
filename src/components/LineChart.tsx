@@ -5,11 +5,12 @@ interface Point {
 }
 
 /** Ohne `line` ist `points` Linie und Punkte; mit `line` sind `points` nur Punkte und `line` die Linie. */
-export function LineChart({ points, unit, line, legend, emptyText }: { points: Point[]; unit: string; line?: Point[]; legend?: { points: string; line: string }; emptyText?: string }) {
+/** `pointLabels`: Wert über und Datum unter jedem Punkt statt nur erstem und letztem Datum. */
+export function LineChart({ points, unit, line, legend, emptyText, pointLabels }: { points: Point[]; unit: string; line?: Point[]; legend?: { points: string; line: string }; emptyText?: string; pointLabels?: boolean }) {
   if (points.length < 2) return <p className="muted small">{emptyText ?? 'Ab zwei Trainings gibt es hier eine Kurve.'}</p>;
   const path = line ?? points;
   const all = line ? [...points, ...line] : points;
-  const W = 340, H = 160, P = { l: 36, r: 10, t: 12, b: 22 };
+  const W = 340, H = 160, P = { l: 36, r: pointLabels ? 20 : 10, t: pointLabels ? 22 : 12, b: 22 };
   const xs = all.map((p) => p.x), ys = all.map((p) => p.y);
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   let y0 = Math.min(...ys), y1 = Math.max(...ys);
@@ -31,8 +32,17 @@ export function LineChart({ points, unit, line, legend, emptyText }: { points: P
       ))}
       <path d={d} className="chart-line" />
       {points.map((p, i) => <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={3.5} className={line ? 'chart-dot chart-dot-muted' : 'chart-dot'} />)}
-      <text x={P.l} y={H - 4} className="chart-tick">{points[0].label}</text>
-      <text x={W - P.r} y={H - 4} textAnchor="end" className="chart-tick">{points[points.length - 1].label}</text>
+      {pointLabels ? points.map((p, i) => (
+        <g key={i}>
+          <text x={sx(p.x)} y={sy(p.y) - 8} textAnchor="middle" className="chart-tick">{fmt(p.y)}</text>
+          <text x={sx(p.x)} y={H - 4} textAnchor="middle" className="chart-tick">{p.label}</text>
+        </g>
+      )) : (
+        <>
+          <text x={P.l} y={H - 4} className="chart-tick">{points[0].label}</text>
+          <text x={W - P.r} y={H - 4} textAnchor="end" className="chart-tick">{points[points.length - 1].label}</text>
+        </>
+      )}
     </svg>
     {line && legend && (
       <div className="chart-legend">
