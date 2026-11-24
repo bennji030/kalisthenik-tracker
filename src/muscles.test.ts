@@ -59,6 +59,21 @@ describe('defaultMuscles', () => {
     expect(defaultMuscles('Plank')).toEqual([]);
     expect(defaultMuscles('')).toEqual([]);
   });
+  it('matches whole words only, with plural endings', () => {
+    expect(defaultMuscles('Chest Machine')).toEqual([]);
+    expect(defaultMuscles('Arrow')).toEqual([]);
+    expect(defaultMuscles('Dipping')).toEqual([]);
+    expect(defaultMuscles('Pullover')).toEqual([]);
+    expect(defaultMuscles('Rows')).toEqual(['lats', 'rearDelts', 'biceps']);
+    expect(defaultMuscles('Ring Dip')).toEqual(['chest', 'triceps', 'frontDelts']);
+    expect(defaultMuscles('Squats')).toEqual(['thighs', 'glutes']);
+    expect(defaultMuscles('Kniebeugen')).toEqual(['thighs', 'glutes']);
+  });
+  it('a name that is not a string gives []', () => {
+    expect(defaultMuscles(undefined)).toEqual([]);
+    expect(defaultMuscles(5)).toEqual([]);
+    expect(defaultMuscles(null)).toEqual([]);
+  });
 });
 
 // In-memory store; transaction() runs callbacks one at a time like IndexedDB rw transactions.
@@ -101,6 +116,14 @@ describe('ensureMuscleDefaults', () => {
     expect(data.exercises[2]).toEqual({ id: 'c', name: 'Plank', type: 'reps' });
     expect(data.exercises[3].muscles).toEqual(['lats', 'biceps', 'forearms']);
     expect(data.exercises[4].muscles).toEqual(['chest', 'triceps', 'frontDelts']);
+    expect(data.done).toBe(true);
+  });
+  it('skips exercises without a string name and still sets the flag', async () => {
+    const odd = [{ id: 'x', type: 'reps' }, { id: 'y', name: 5, type: 'reps' }] as unknown as Exercise[];
+    const { store, data } = memStore({ exercises: [...odd, ex('a', 'Dips')] });
+    await ensureMuscleDefaults(store);
+    expect(data.exercises.slice(0, 2)).toEqual(odd);
+    expect(data.exercises[2].muscles).toEqual(['chest', 'triceps', 'frontDelts']);
     expect(data.done).toBe(true);
   });
   it('does nothing once the flag is set', async () => {

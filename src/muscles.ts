@@ -47,10 +47,16 @@ const DEFAULTS: [keywords: string[], muscles: Muscle[]][] = [
   [['kniebeug', 'squat'], ['thighs', 'glutes']],
 ];
 
-/** Standard-Muskeln nach Stichwort im Übungsnamen, [] wenn nichts passt. */
-export function defaultMuscles(name: string): Muscle[] {
+// Ganze Wörter: Stichwort am Wortanfang, danach höchstens eine Endung wie in Dips, Liegestütze, Kniebeugen.
+const escape = (k: string) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PATTERNS = DEFAULTS.map(([keys, muscles]) =>
+  [keys.map((k) => new RegExp(`(^|[^\\p{L}])${escape(k)}(s|e|en|n)?($|[^\\p{L}])`, 'u')), muscles] as const);
+
+/** Standard-Muskeln nach Stichwort im Übungsnamen, [] wenn nichts passt oder der Name kein Text ist (z. B. aus einem Backup). */
+export function defaultMuscles(name: unknown): Muscle[] {
+  if (typeof name !== 'string') return [];
   const n = name.toLowerCase();
-  const hit = DEFAULTS.find(([keys]) => keys.some((k) => n.includes(k)));
+  const hit = PATTERNS.find(([res]) => res.some((re) => re.test(n)));
   return hit ? [...hit[1]] : [];
 }
 

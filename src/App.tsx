@@ -45,7 +45,8 @@ export function App() {
     void (async () => {
       await seedIfEmpty();
       await ensureCardioDayInDb();
-      await ensureMuscleDefaultsInDb();
+      // Die Grafik ist ein Extra: scheitert die Ergänzung, startet die App trotzdem.
+      try { await ensureMuscleDefaultsInDb(); } catch (e) { console.error(e); }
       // Dauerhaften Speicher anfragen (iOS: vor allem relevant als Home-Bildschirm-App).
       try { await navigator.storage?.persist?.(); } catch { /* egal */ }
       const a = await activeSession();
