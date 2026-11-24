@@ -49,7 +49,7 @@ describe('parseProfile', () => {
     expect(parseProfile({}, now)).toEqual({});
   });
   it('keeps a fully valid object', () => {
-    const p = { name: 'Benni', gender: 'male', heightCm: 180, birthDate: '1990-01-01', bodyFat: 15.5, bodyFatDate: '2026-06-01' };
+    const p = { name: 'Max Mustermann', gender: 'male', heightCm: 180, birthDate: '1990-01-01', bodyFat: 15.5, bodyFatDate: '2026-06-01' };
     expect(parseProfile(p, now)).toEqual(p);
   });
   it('drops invalid fields only', () => {
