@@ -1,3 +1,4 @@
+// Seit #75 ungenutzt außer parseTrainingPrefs (Sperrbildschirm-Anzeige entfernt).
 export interface TrainingPrefs {
   restSound: boolean;
   lockScreen: boolean;

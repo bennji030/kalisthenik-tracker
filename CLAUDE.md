@@ -91,9 +91,8 @@ src/health.ts        Apple Health sync, pure: config/status parsing, URL/token v
 src/health.test.ts   tests for it (plus manualFields/nextManual)
 src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memory throttle and running flag, force-next flag
 src/useHealthSync.ts hook: sync once when ready and on every return to the app; useSyncRunning()
-src/lockScreen.ts     pure: parseTrainingPrefs(), fmtClock(), nowPlaying() (lock-screen title), silentWav()/beepWav() (generated WAV bytes)
+src/lockScreen.ts     parseTrainingPrefs() (meta key `training`); the lock-screen helpers in it are unused since #75
 src/lockScreen.test.ts tests for it
-src/nowPlaying.ts    browser wiring (singleton): silent looping <audio> + Media Session, restEndBeep(), stopNowPlaying()
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
@@ -166,7 +165,7 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   card shows a front/back body graphic with today's planned or finished strength
   muscles, stronger the more sets; no graphic on rest/cardio days or while a session
   runs. Editing muscles comes later with the plan editor.
-- Meta key `training` `{ restSound, lockScreen }`: `restSound` (default on) also mutes the success sound; `lockScreen` (default off, experiment) = silent looping `<audio>` + Media Session, started by the first set check, the rest-end beep plays through the same element, stopped on finish/discard/leaving the workout.
+- Meta key `training` `{ restSound }`: `restSound` (default on) controls the rest-end beep and the success sound, played via Web Audio only while the app is open, with the audio session set to `ambient` so other music keeps playing; an old stored `lockScreen` field is ignored.
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history is the weight subpage under Statistik → Ernährung).
   Calories, protein and steps can be entered by hand or come from Apple Health.

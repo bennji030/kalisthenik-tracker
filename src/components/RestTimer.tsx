@@ -5,6 +5,9 @@ let audioCtx: AudioContext | null = null;
 /** Muss aus einem Tipp heraus aufgerufen werden, sonst blockiert iOS den Ton. */
 export function unlockAudio() {
   try {
+    // iOS: mit anderer Musik mischen statt sie zu stoppen
+    const nav = navigator as Navigator & { audioSession?: { type: string } };
+    if (nav.audioSession) nav.audioSession.type = 'ambient';
     audioCtx ??= new AudioContext();
     if (audioCtx.state === 'suspended') void audioCtx.resume();
   } catch {
