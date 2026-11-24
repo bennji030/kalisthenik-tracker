@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { roundKg } from './weight';
-import { mergeDay, type DayPatch } from './dayValues';
+import { mergeDay, nextManual, type DayField, type DayPatch } from './dayValues';
 
 /** weighted = Wdh. + Zusatzgewicht, reps = nur Wdh., hold = Haltezeit in Sekunden */
 export type ExType = 'weighted' | 'reps' | 'hold';
@@ -81,6 +81,7 @@ export interface DayValues {
   proteinG?: number;
   source: 'manual' | 'health';
   updatedAt: number; // ms
+  manual?: DayField[]; // von Hand gesetzte Felder; Health überschreibt sie nicht
 }
 
 export interface Meta {
@@ -128,6 +129,9 @@ export async function saveWeight(date: string, kg: number) {
 /** Trägt Werte für einen Tag ein; nicht angegebene Felder bleiben erhalten. */
 export async function saveDay(date: string, patch: DayPatch) {
   await db.transaction('rw', db.days, async () => {
-    await db.days.put(mergeDay(await db.days.get(date), date, patch, Date.now()));
+    const existing = await db.days.get(date);
+    const next = mergeDay(existing, date, patch, Date.now());
+    // Immer eine Liste schreiben, auch leer: ohne Liste gälte die Zeile als komplett manuell.
+    await db.days.put({ ...next, manual: nextManual(existing, next) });
   });
 }
