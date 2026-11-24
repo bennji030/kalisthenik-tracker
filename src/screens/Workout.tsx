@@ -227,7 +227,7 @@ function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }
     if (si === active) setPicked(null);
     onToggle(si);
   };
-  const step = (label: string, text: string, field: 'weight' | 'reps' | 'sec', delta: number) => (
+  const step = (label: string, text: ReactNode, field: 'weight' | 'reps' | 'sec', delta: number) => (
     <button key={label} className="step-btn" aria-label={`Satz ${active + 1} ${label}`}
       onClick={() => onSet(active, { [field]: stepValue(entry.sets[active][field], delta) })}>{text}</button>
   );
@@ -266,8 +266,8 @@ function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }
               <div className={`step-row ${hasTarget ? 'step-target' : ''}`}>
                 {t === 'weighted' && (
                   <div className="step-pair step-kg">
-                    {step(`Gewicht minus ${fmtKg(wStep)} kg`, `−${fmtKg(wStep)} kg`, 'weight', -wStep)}
-                    {step(`Gewicht plus ${fmtKg(wStep)} kg`, `+${fmtKg(wStep)} kg`, 'weight', wStep)}
+                    {step(`Gewicht minus ${fmtKg(wStep)} kg`, <>−{fmtKg(wStep)}<span className="step-unit"> kg</span></>, 'weight', -wStep)}
+                    {step(`Gewicht plus ${fmtKg(wStep)} kg`, <>+{fmtKg(wStep)}<span className="step-unit"> kg</span></>, 'weight', wStep)}
                   </div>
                 )}
                 <div className="step-pair step-main">

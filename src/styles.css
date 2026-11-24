@@ -455,6 +455,7 @@ main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
   .sets-weighted .step-row:not(.step-target) { grid-template-columns: 34px 1fr 1fr 48px; }
   .step-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; min-width: 0; }
   .step-btn { min-width: 0; padding: 0; font-size: 14px; }
+  .step-unit { display: none; }
   .step-main { grid-column: -3; }
   .step-kg { grid-column: -4; }
 }
