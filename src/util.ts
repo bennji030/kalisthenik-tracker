@@ -10,6 +10,11 @@ export function fmtKg(n: number | null | undefined): string {
   return (Math.round(n * 100) / 100).toLocaleString('de-DE');
 }
 
+/** Ganze Zahl mit Tausenderpunkt, z. B. "8.432" */
+export function fmtInt(n: number): string {
+  return Math.round(n).toLocaleString('de-DE');
+}
+
 export function parseNum(s: string): number | null {
   const t = s.trim().replace(',', '.');
   if (t === '') return null;

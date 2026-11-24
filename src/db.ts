@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { roundKg } from './weight';
+import { mergeDay, type DayPatch } from './dayValues';
 
 /** weighted = Wdh. + Zusatzgewicht, reps = nur Wdh., hold = Haltezeit in Sekunden */
 export type ExType = 'weighted' | 'reps' | 'hold';
@@ -72,6 +73,16 @@ export interface WeightEntry {
   kg: number;
 }
 
+/** Schritte, Kalorien und Protein, ein Eintrag pro lokalem Kalendertag (YYYY-MM-DD). */
+export interface DayValues {
+  date: string;
+  steps?: number;
+  kcal?: number;
+  proteinG?: number;
+  source: 'manual' | 'health';
+  updatedAt: number; // ms
+}
+
 export interface Meta {
   key: string;
   value: unknown;
@@ -83,6 +94,7 @@ class KalisthenikDB extends Dexie {
   sessions!: Table<Session, string>;
   meta!: Table<Meta, string>;
   weights!: Table<WeightEntry, string>;
+  days!: Table<DayValues, string>;
 
   constructor() {
     super('kalisthenik');
@@ -93,6 +105,7 @@ class KalisthenikDB extends Dexie {
       meta: 'key',
     });
     this.version(2).stores({ weights: 'date' });
+    this.version(3).stores({ days: 'date' });
   }
 }
 
@@ -110,4 +123,11 @@ export async function setMeta(key: string, value: unknown) {
 /** Speichert das Gewicht für einen Tag; ein vorhandener Eintrag wird überschrieben. */
 export async function saveWeight(date: string, kg: number) {
   await db.weights.put({ date, kg: roundKg(kg) });
+}
+
+/** Trägt Werte für einen Tag ein; nicht angegebene Felder bleiben erhalten. */
+export async function saveDay(date: string, patch: DayPatch) {
+  await db.transaction('rw', db.days, async () => {
+    await db.days.put(mergeDay(await db.days.get(date), date, patch, Date.now()));
+  });
 }
