@@ -34,7 +34,7 @@ queries), `vite-plugin-pwa` (auto-update service worker), Vitest. No UI or CSS
 framework, no router, no chart library.
 
 ```
-src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry)
+src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry, DayValues), saveDay()
 src/progression.ts   suggest(): double progression, rep by rep (see below)
 src/progression.test.ts  tests for it (protected)
 src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter on Home)
@@ -64,11 +64,13 @@ src/today.ts        Home cards: duration estimate, next training, 30-day weight 
 src/today.test.ts   tests for it
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
+src/dayValues.ts     steps/kcal/protein per day: validators, mergeDay(), stepsWeek(), goalProgress(), dayTrend(), isDayValuesList(), goals (parseGoals)
+src/dayValues.test.ts tests for it
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; swipe left/right switches tabs (not from the left edge, the calendar or horizontal scrollers; off in workout, subpages, inputs and confirms); Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
+src/screens/         Home (overview + weigh-in prompt; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
@@ -107,9 +109,17 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   eintragen"). They are stored at 12:00 of that day plus the real duration (meta
   `entryDay` holds the chosen day while the workout runs); the newest date counts
   as "last time" for progression, also when it lies in the future.
+- Schritte & Kalorien: table `days`, one row per local day (YYYY-MM-DD) with
+  optional `steps`/`kcal`/`proteinG`, `source` `manual`|`health` and `updatedAt`.
+  Manual entries win over health data; the Health import comes in Teil 3 (nothing
+  writes `health` yet). Goals live in the meta key `goals` (defaults 2200 kcal /
+  160 g protein / 8000 steps, set under Einstellungen → Profil). Entry, curve and
+  history with edit/delete are on the DayValues subpage, opened from the Home cards
+  "Schritte heute" and "Kalorien heute".
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
-  Calories and protein are still planned.
+  Calories, protein and steps can be entered by hand; automatic import is still
+  planned.
 
 ## Design
 
