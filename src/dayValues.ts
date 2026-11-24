@@ -77,6 +77,8 @@ export function isDayValuesList(x: unknown): x is DayValues[] {
       const n = v[k];
       if (n !== undefined && (typeof n !== 'number' || !Number.isFinite(n) || n < 0)) return false;
     }
+    const b = v.burnedKcal;
+    if (b !== undefined && (typeof b !== 'number' || !Number.isFinite(b) || b < 0)) return false;
     if (v.manual !== undefined && !isFieldList(v.manual)) return false;
     if (v.source !== 'manual' && v.source !== 'health') return false;
     if (typeof v.updatedAt !== 'number' || !Number.isFinite(v.updatedAt)) return false;

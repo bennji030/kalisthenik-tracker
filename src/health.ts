@@ -5,13 +5,13 @@ import { isDayKey } from './profile';
 import { dayKey } from './weight';
 
 /** Apple-Health-Abgleich über den eigenen Server (meta `health`), nur auf diesem Gerät. */
-export type HealthConfig = { url: string; token: string; shortcut: string };
+export type HealthConfig = { url: string; token: string; shortcut: string; healthKit?: true };
 
 /** Ergebnis des letzten Abgleichs (meta `healthStatus`). */
 export type HealthStatus = { lastSync: number | null; error: string | null };
 
-/** Ein Tag vom Server, schon auf die App-Grenzen gebracht. */
-export type RemoteDay = { date: string } & DayPatch;
+/** Ein Tag vom Server oder aus HealthKit, schon auf die App-Grenzen gebracht; burnedKcal kommt nur aus HealthKit. */
+export type RemoteDay = { date: string; burnedKcal?: number } & DayPatch;
 
 export type SyncResult =
   | { kind: 'skipped' } // nicht eingerichtet, keine Anfrage
@@ -67,6 +67,7 @@ export function parseHealthConfig(value: unknown): HealthConfig {
     url: typeof v.url === 'string' ? v.url : '',
     token: typeof v.token === 'string' ? v.token : '',
     shortcut: shortcut || DEFAULT_SHORTCUT,
+    ...(v.healthKit === true ? { healthKit: true as const } : {}),
   };
 }
 
@@ -173,6 +174,7 @@ export function parseDaysResponse(status: number, body: string, now: number): Re
 /**
  * Health-Werte in eine Zeile übernehmen: von Hand gesetzte Felder bleiben,
  * alle anderen kommen vom Server oder fallen weg, wenn der Server sie nicht hat.
+ * burnedKcal bleibt stehen, wenn die Quelle es nicht liefert (der Server kennt es nicht).
  */
 export function mergeHealth(existing: DayValues | undefined, remote: RemoteDay, now: number): DayValues {
   const keep = manualFields(existing);
@@ -187,6 +189,8 @@ export function mergeHealth(existing: DayValues | undefined, remote: RemoteDay, 
       next[k] = remote[k];
     }
   }
+  const burned = remote.burnedKcal ?? existing?.burnedKcal;
+  if (burned !== undefined) next.burnedKcal = burned;
   if (manual.length) {
     next.manual = manual;
     next.source = 'manual';
