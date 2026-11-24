@@ -188,6 +188,13 @@ p { margin: 0; }
 }
 .check.checked { background: var(--ok); color: var(--on-ok); }
 .set-missed .check.checked { background: var(--warn); color: var(--on-warn); }
+.step-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; padding: 0 4px; }
+.step-btn {
+  min-width: 44px; min-height: 44px; border-radius: 10px; border: 0; background: var(--card-2); color: var(--text);
+  font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.step-btn:active { opacity: 0.7; }
 .small-row { gap: 6px; }
 
 .wo-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }

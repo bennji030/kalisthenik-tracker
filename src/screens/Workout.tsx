@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getMeta, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, unlockAudio } from '../components/RestTimer';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { entrySucceeded } from '../progression';
+import { REPS_STEP, SEC_STEP, stepValue, weightStep } from '../stepper';
 import { ENTRY_DAY_KEY, type EntryDay } from '../sessions';
 import { fmtAddedKg, fmtDate, fmtKg } from '../util';
 
@@ -34,6 +35,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const [confirm, setConfirm] = useState<null | 'finish' | 'discard'>(null);
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
+  const template = useLiveQuery(async () => (session ? db.templates.get(session.templateId) : undefined), [session?.templateId]);
   const entry = useLiveQuery(() => getMeta<EntryDay | null>(ENTRY_DAY_KEY, null), []);
   const entryDay = entryDayFor(entry, sessionId);
   const first = useRef(true);
@@ -151,6 +153,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
             key={e.slotId}
             entry={e}
             ex={ex}
+            increment={template?.slots.find((sl) => sl.id === e.slotId)?.increment}
             onSet={(si, p) => updateSet(ei, si, p)}
             onToggle={(si) => toggleDone(ei, si)}
             onAdd={() => addSet(ei)}
@@ -205,16 +208,29 @@ function targetText(s: SetLog, type: Exercise['type']): ReactNode {
 interface CardProps {
   entry: EntryLog;
   ex: Exercise;
+  increment: number | null | undefined;
   onSet: (si: number, p: Partial<SetLog>) => void;
   onToggle: (si: number) => void;
   onAdd: () => void;
   onRemove: () => void;
 }
 
-function ExerciseCard({ entry, ex, onSet, onToggle, onAdd, onRemove }: CardProps) {
+function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }: CardProps) {
   const t = ex.type;
   const allDone = entry.sets.length > 0 && entry.sets.every((s) => s.done);
   const hasTarget = entry.sets.some((s) => s.targetReps != null);
+  const [picked, setPicked] = useState<number | null>(null);
+  const firstOpen = entry.sets.findIndex((s) => !s.done);
+  const active = picked != null && picked < entry.sets.length ? picked : firstOpen;
+  const wStep = weightStep(increment);
+  const toggle = (si: number) => {
+    if (si === active) setPicked(null);
+    onToggle(si);
+  };
+  const step = (label: string, text: string, field: 'weight' | 'reps' | 'sec', delta: number) => (
+    <button key={label} className="step-btn" aria-label={`Satz ${active + 1} ${label}`}
+      onClick={() => onSet(active, { [field]: stepValue(entry.sets[active][field], delta) })}>{text}</button>
+  );
   return (
     <section className={`card ex-card ${allDone ? 'ex-done' : ''}`}>
       <h2>{ex.name}</h2>
@@ -232,7 +248,8 @@ function ExerciseCard({ entry, ex, onSet, onToggle, onAdd, onRemove }: CardProps
         {entry.sets.map((s, si) => {
           const missed = s.done && s.targetReps != null && ((s.reps ?? 0) < s.targetReps || (s.weight ?? 0) < (s.targetWeight ?? 0));
           return (
-            <div key={si} className={`set-row ${s.done ? (missed ? 'set-missed' : 'set-done') : ''}`}>
+            <Fragment key={si}>
+            <div className={`set-row ${s.done ? (missed ? 'set-missed' : 'set-done') : ''}`} onFocusCapture={() => setPicked(si)}>
               <span className="set-no">{si + 1}</span>
               {hasTarget && <span className="set-target">{targetText(s, t)}</span>}
               {t === 'weighted' && (
@@ -243,8 +260,20 @@ function ExerciseCard({ entry, ex, onSet, onToggle, onAdd, onRemove }: CardProps
               ) : (
                 <NumInput value={s.reps} onChange={(v) => onSet(si, { reps: v })} ariaLabel={`Satz ${si + 1} Wiederholungen`} />
               )}
-              <button className={`check ${s.done ? 'checked' : ''}`} onClick={() => onToggle(si)} aria-label={`Satz ${si + 1} erledigt`}>✓</button>
+              <button className={`check ${s.done ? 'checked' : ''}`} onClick={() => toggle(si)} aria-label={`Satz ${si + 1} erledigt`}>✓</button>
             </div>
+            {si === active && (
+              <div className="step-row">
+                {t === 'weighted' && <>
+                  {step(`Gewicht minus ${fmtKg(wStep)} kg`, `−${fmtKg(wStep)} kg`, 'weight', -wStep)}
+                  {step(`Gewicht plus ${fmtKg(wStep)} kg`, `+${fmtKg(wStep)} kg`, 'weight', wStep)}
+                </>}
+                {t === 'hold'
+                  ? <>{step(`Sekunden minus ${SEC_STEP}`, `−${SEC_STEP} s`, 'sec', -SEC_STEP)}{step(`Sekunden plus ${SEC_STEP}`, `+${SEC_STEP} s`, 'sec', SEC_STEP)}</>
+                  : <>{step(`Wiederholungen minus ${REPS_STEP}`, `−${REPS_STEP}`, 'reps', -REPS_STEP)}{step(`Wiederholungen plus ${REPS_STEP}`, `+${REPS_STEP}`, 'reps', REPS_STEP)}</>}
+              </div>
+            )}
+            </Fragment>
           );
         })}
       </div>
