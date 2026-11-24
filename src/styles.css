@@ -319,7 +319,7 @@ select { width: 100%; appearance: none; }
 .cardio-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 8px; }
 .cardio-fields input { width: 100%; }
 .plan-add { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.toggle { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.toggle { display: flex; gap: 8px; align-items: center; font-size: 14px; min-height: 44px; }
 .toggle input { width: 20px; height: 20px; accent-color: var(--accent); }
 .lib-new { display: flex; flex-direction: column; gap: 8px; }
 .lib { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }

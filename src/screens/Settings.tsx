@@ -219,6 +219,7 @@ function TrainingCard() {
           <input type="checkbox" checked={prefs.restSound} onChange={(e) => void setMeta('training', { ...prefs, restSound: e.target.checked })} />
           <span>Ton bei Pausenende</span>
         </label>
+        <p className="muted small">Auch für den Erfolgs-Ton.</p>
         <label className="toggle">
           <input
             type="checkbox"
@@ -229,8 +230,8 @@ function TrainingCard() {
           <span>Sperrbildschirm-Anzeige (Experiment)</span>
         </label>
         <p className="muted small">
-          Zeigt Pause und Satz auf dem Sperrbildschirm. Nutzt eine stille Audiospur, das kann Akku kosten, und iOS kann sie beenden. Startet beim ersten abgehakten Satz.
-          {!supported && ' Dieser Browser unterstützt das nicht.'}
+          {!supported && 'Dieser Browser unterstützt das nicht. '}
+          Zeigt Pause und Satz auf dem Sperrbildschirm und piept auch bei gesperrtem iPhone. Pausiert dafür laufende Musik (z. B. Spotify), kann Akku kosten und startet beim ersten abgehakten Satz. Endet mit „Zurück“.
         </p>
       </section>
     </>
