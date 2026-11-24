@@ -66,12 +66,13 @@ export function PlanScreen() {
     <div className="screen">
       <h1>Plan</h1>
       <p className="muted small">Änderungen gelten ab dem nächsten Training. Der Verlauf bleibt erhalten.</p>
+      <p className="muted small">Übung antippen zum Bearbeiten, am Griff ≡ ziehen zum Sortieren.</p>
       <div className="cards">
       {templates.map((t) => (
         <section key={t.id} className="card">
           <button className="card-toggle day-head" aria-label={`Tag bearbeiten: ${t.name}`} onClick={() => setDayEdit({ template: t, isNew: false })}>
             <div>
-              <h2>{t.name}</h2>
+              <span className="day-name">{t.name}</span>
               <p className="muted small">{t.weekdays.map((d) => WEEKDAYS[d]).join(', ') || 'kein fester Tag'}</p>
             </div>
             <span className="muted day-chevron" aria-hidden="true">›</span>
@@ -116,7 +117,7 @@ function SlotList({ template: t, exMap, onOpen }: { template: Template; exMap: M
   const to = drag ? dropIndex(drag.from, drag.dy, drag.heights) : -1;
 
   const down = (e: PointerEvent<HTMLButtonElement>, i: number) => {
-    if (drag || pending || !listRef.current) return;
+    if (e.button !== 0 || drag || pending || !listRef.current) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const heights = Array.from(listRef.current.children, (li) => li.getBoundingClientRect().height);
@@ -203,6 +204,12 @@ function SlotSheet({ template, initial, isNew, exercises, onClose }: {
 
   return (
     <Sheet title={isNew ? 'Neue Übung' : (ex?.name ?? 'Übung')}>
+      {type && suggestion && (
+        <div className="sheet-preview">
+          <p>{previewText(suggestion, type, history.length > 0)}</p>
+          <p className="muted small">{suggestion.label}</p>
+        </div>
+      )}
       <label className="field">
         <span>Übung</span>
         <select value={draft.exerciseId} onChange={(e) => set({ exerciseId: e.target.value })}>
@@ -238,12 +245,6 @@ function SlotSheet({ template, initial, isNew, exercises, onClose }: {
           </label>
           <p className="muted small">An: die App schlägt jedes Mal das nächste Ziel vor (doppelte Progression). Aus: frei, z. B. für Skills; die Werte vom letzten Mal werden vorgeschlagen, nichts wird bewertet.</p>
         </>
-      )}
-      {type && suggestion && (
-        <div className="sheet-preview">
-          <p>{previewText(suggestion, type)}</p>
-          <p className="muted small">{suggestion.label}</p>
-        </div>
       )}
       {!isNew && (
         <>

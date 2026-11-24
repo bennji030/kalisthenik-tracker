@@ -65,6 +65,7 @@ src/addedExercise.ts exercises added during a workout: DEFAULT_SLOT, addedEntry(
 src/addedExercise.test.ts tests for it (plus suggest() after a free entry)
 src/planEdit.ts      Plan tab, pure: moveSlot(), dropIndex() (drag target), slotSummary(), previewText() ("Nächstes Mal"), cleanSlot()
 src/planEdit.test.ts tests for it
+src/planEditPreview.test.ts tests for the preview without history
 src/cardio.ts        cardio day: strength/cardio filters, cardioSummary(), logCardio(), one-time ensureCardioDay() (meta flag `cardioDay`)
 src/cardio.test.ts   tests for it
 src/finishSummary.ts  success screen after "Training beenden": trainingNumber(), flameGain(), sessionStats(), backdatedLabel()

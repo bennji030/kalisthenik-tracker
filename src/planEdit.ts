@@ -38,14 +38,17 @@ export function slotSummary(slot: Slot, ex?: Exercise): string {
   return slot.restSec > 0 ? `${main} · ${fmtKg(slot.restSec / 60)} min` : main;
 }
 
-/** Vorschau-Zeile für das nächste Training, z. B. "Nächstes Mal: 5, 4, 4, 4 · +25 kg". */
-export function previewText(s: Suggestion, type: ExType): string {
+/**
+ * Vorschau-Zeile für das nächste Training, z. B. "Nächstes Mal: 5, 4, 4, 4 · +25 kg".
+ * Frei ohne bisheriges Training: die Werte sind Startwerte, nicht "zuletzt".
+ */
+export function previewText(s: Suggestion, type: ExType, hasHistory = true): string {
   const nums = (type === 'hold' ? s.sec : s.reps).filter((v): v is number => v != null);
   const values = nums.length ? nums.join(', ') + (type === 'hold' ? ' s' : '') : '';
   const weight = type === 'weighted' ? fmtAddedKg(s.weight) : '';
   if (s.kind !== 'free') return `Nächstes Mal: ${values}${weight ? ` · ${weight}` : ''}`;
   if (!values) return 'Nächstes Mal: frei';
-  return `Nächstes Mal: frei · zuletzt ${values}${weight ? ` ${weight}` : ''}`;
+  return `Nächstes Mal: frei · ${hasHistory ? 'zuletzt' : 'Startwerte'} ${values}${weight ? ` ${weight}` : ''}`;
 }
 
 /** Werte vor dem Speichern begrenzen; Unsinn (NaN) wird zum Standardwert. */
