@@ -207,7 +207,24 @@ function DoneCard({ s, exMap }: { s: Session; exMap: Map<string, Exercise> }) {
       <h2>{s.templateName}</h2>
       <p className="muted small">{fmtDate(s.startedAt, true)} · {mins} min</p>
       <SessionLog entries={s.entries} exMap={exMap} />
+      <DeleteSession id={s.id} />
     </section>
+  );
+}
+
+function DeleteSession({ id }: { id: string }) {
+  const [asking, setAsking] = useState(false);
+  if (!asking) {
+    return <button className="btn btn-small btn-ghost danger" onClick={() => setAsking(true)}>Löschen</button>;
+  }
+  return (
+    <div className="confirm">
+      <p>Training wirklich löschen? Das geht nicht rückgängig.</p>
+      <div className="row">
+        <button className="btn btn-danger" onClick={() => void db.sessions.delete(id)}>Löschen</button>
+        <button className="btn" onClick={() => setAsking(false)}>Abbrechen</button>
+      </div>
+    </div>
   );
 }
 
@@ -216,6 +233,7 @@ function CardioDoneCard({ s }: { s: Session }) {
     <section className="card">
       <h2>{s.templateName}</h2>
       <p className="muted small">{fmtDate(s.startedAt, true)} · {cardioSummary(s)}</p>
+      <DeleteSession id={s.id} />
     </section>
   );
 }
