@@ -1,0 +1,19 @@
+{
+  "name": "kalisthenik-native",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cd .. && npx vite build --config native/vite.config.ts",
+    "sync": "npm run build && cap sync ios",
+    "open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.6.2",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.6.2",
+    "@capacitor/local-notifications": "8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

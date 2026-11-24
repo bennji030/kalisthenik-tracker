@@ -28,6 +28,9 @@ in interactive sessions explain each step briefly before doing it.
   issue asks for one (e.g. a food database lookup), and the app must keep working
   offline without it.
   Exception (approved by the owner): the self-hosted mini server in `server/` (Cloudflare Worker now, own server later) that only relays daily Apple Health totals (steps, kcal, protein). The app must work fully without it.
+- Native iOS shell (`native/`, Capacitor) is wanted by the owner. The web app
+  stays unchanged. App code never imports `@capacitor/*` and talks to the shell
+  only through `src/native.ts`, which is a no-op in the browser.
 - The factory never deploys by hand, never pushes `main`, and pushes only
   `factory/*` branches.
 - Git identity in this repo is `bennji030` with the GitHub no-reply address (set
@@ -93,6 +96,8 @@ src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memor
 src/useHealthSync.ts hook: sync once when ready and on every return to the app; useSyncRunning()
 src/lockScreen.ts     parseTrainingPrefs() (meta key `training`); the lock-screen helpers in it are unused since #75
 src/lockScreen.test.ts tests for it
+src/native.ts        bridge to the native shell via window.Capacitor.nativePromise (rest notification, haptics); no-op in the browser
+src/native.test.ts   tests for it
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
@@ -104,6 +109,7 @@ src/bodyRegions.test.ts tests for it
 src/vendor/          third-party source copied in; bodyMuscles/ = SVG muscle paths from vulovix/body-muscles, Apache-2.0, keep LICENSE/NOTICE/header, see its README
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
+native/              Capacitor iOS shell (own package.json; `npm run build` builds `native/www` with base `/` and no service worker, plus rest.wav; `npm run sync` = build + cap sync ios; `native/www` and `native/ios` are gitignored; setup checklist in native/README.md)
 server/              standalone Cloudflare Worker relaying daily Health totals (own package.json with wrangler; not part of the app build; tests in server/src/*.test.ts run with the root npm test; setup in server/README.md)
 ```
 
