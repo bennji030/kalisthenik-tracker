@@ -189,6 +189,7 @@ p { margin: 0; }
 .check.checked { background: var(--ok); color: var(--on-ok); }
 .set-missed .check.checked { background: var(--warn); color: var(--on-warn); }
 .step-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; padding: 0 4px; }
+.step-pair { display: contents; }
 .step-btn {
   min-width: 44px; min-height: 44px; border-radius: 10px; border: 0; background: var(--card-2); color: var(--text);
   font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;
@@ -444,4 +445,16 @@ main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
   .readable { max-width: 720px; }
   .cards-habits { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
   .cards-habits > .habit-weight { grid-column: 1 / -1; }
+}
+
+/* Breit: Schritt-Paare unter den Feldern der Satzzeile (Satz, Ziel, kg, Wdh., Haken). */
+@media (min-width: 700px) {
+  .step-row { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: 34px 1fr 1fr 48px; }
+  .sets-weighted .step-row { grid-template-columns: 34px 1fr 1fr 1fr 48px; }
+  .sets-reps .step-row:not(.step-target), .sets-hold .step-row:not(.step-target) { grid-template-columns: 34px 1fr 48px; }
+  .sets-weighted .step-row:not(.step-target) { grid-template-columns: 34px 1fr 1fr 48px; }
+  .step-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; min-width: 0; }
+  .step-btn { min-width: 0; padding: 0; font-size: 14px; }
+  .step-main { grid-column: -3; }
+  .step-kg { grid-column: -4; }
 }

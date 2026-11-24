@@ -263,14 +263,22 @@ function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }
               <button className={`check ${s.done ? 'checked' : ''}`} onClick={() => toggle(si)} aria-label={`Satz ${si + 1} erledigt`}>✓</button>
             </div>
             {si === active && (
-              <div className="step-row">
-                {t === 'weighted' && <>
-                  {step(`Gewicht minus ${fmtKg(wStep)} kg`, `−${fmtKg(wStep)} kg`, 'weight', -wStep)}
-                  {step(`Gewicht plus ${fmtKg(wStep)} kg`, `+${fmtKg(wStep)} kg`, 'weight', wStep)}
-                </>}
-                {t === 'hold'
-                  ? <>{step(`Sekunden minus ${SEC_STEP}`, `−${SEC_STEP} s`, 'sec', -SEC_STEP)}{step(`Sekunden plus ${SEC_STEP}`, `+${SEC_STEP} s`, 'sec', SEC_STEP)}</>
-                  : <>{step(`Wiederholungen minus ${REPS_STEP}`, `−${REPS_STEP}`, 'reps', -REPS_STEP)}{step(`Wiederholungen plus ${REPS_STEP}`, `+${REPS_STEP}`, 'reps', REPS_STEP)}</>}
+              <div className={`step-row ${hasTarget ? 'step-target' : ''}`}>
+                {t === 'weighted' && (
+                  <div className="step-pair step-kg">
+                    {step(`Gewicht minus ${fmtKg(wStep)} kg`, `−${fmtKg(wStep)} kg`, 'weight', -wStep)}
+                    {step(`Gewicht plus ${fmtKg(wStep)} kg`, `+${fmtKg(wStep)} kg`, 'weight', wStep)}
+                  </div>
+                )}
+                <div className="step-pair step-main">
+                  {t === 'hold' ? <>
+                    {step(`Sekunden minus ${SEC_STEP}`, `−${SEC_STEP} s`, 'sec', -SEC_STEP)}
+                    {step(`Sekunden plus ${SEC_STEP}`, `+${SEC_STEP} s`, 'sec', SEC_STEP)}
+                  </> : <>
+                    {step(`Wiederholungen minus ${REPS_STEP}`, `−${REPS_STEP}`, 'reps', -REPS_STEP)}
+                    {step(`Wiederholungen plus ${REPS_STEP}`, `+${REPS_STEP}`, 'reps', REPS_STEP)}
+                  </>}
+                </div>
               </div>
             )}
             </Fragment>
