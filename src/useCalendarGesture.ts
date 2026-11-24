@@ -90,7 +90,8 @@ export function useCalendarGesture(
       const head = body.querySelector<HTMLElement>('.cal-head');
       const first = rows?.firstElementChild as HTMLElement | null;
       if (!rows || !head || !first) return null;
-      const weekH = head.offsetHeight + first.offsetHeight;
+      const pad = body.offsetHeight - (body.firstElementChild as HTMLElement).offsetHeight;
+      const weekH = pad + head.offsetHeight + first.offsetHeight;
       const selRow = body.querySelector('.day-sel')?.parentElement as HTMLElement | null | undefined;
       const offset = selRow && selRow.parentElement === rows ? selRow.offsetTop : 0;
       return { startP: expanded ? 1 : 0, weekH, range: body.offsetHeight - weekH, offset, rows };
