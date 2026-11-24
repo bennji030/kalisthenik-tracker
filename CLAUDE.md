@@ -70,6 +70,8 @@ src/seed.ts          default exercises and the 4 training days (first start only
 src/backup.ts        JSON export (iOS share sheet) and import
 src/backupFormat.ts   backup identifier and isBackup() validation, exportMeta()/importMeta() for device-local meta keys (no db import)
 src/backupMeta.test.ts tests for the meta helpers
+src/statsCharts.ts  Statistik, Ernährung/Cardio: weightWeek(), weightWeekChange(), dayBars() (7 Tage kcal/Protein), cardioWeeks() (8 Wochen)
+src/statsCharts.test.ts tests for it
 src/stats.ts        Statistik, Training: exerciseGroup() (Pull/Push/Skills/Sonstiges), sessionMetric(), exerciseWindow() (letzte 7), windowChange(), fmtChange()
 src/stats.test.ts   tests for it
 src/today.ts        Home cards: duration estimate, next training, 30-day weight trend
@@ -86,8 +88,8 @@ src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Statistik, Plan), toast; swipe left/right switches tabs (not from the left edge, the calendar or horizontal scrollers; off in workout, subpages, inputs and confirms); Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt; today card with the body graphic of today's muscles; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar; finished trainings and cardio entries in the selected day's card can be deleted with an inline confirm), Workout (the active set, first open or last focused, has a −/+ line: reps 1, kg = slot increment or 2,5, seconds 5, never below 0), HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History (Statistik: Training with per-exercise cards grouped Pull/Push/Skills/Sonstiges, Alle Trainings, Ernährung with weight + link to Schritte & Kalorien, Cardio list), PlanEditor, Settings (profile, Darstellung, Apple Health + Daten & Backup), HealthSection (server address, key, shortcut name, Verbindung testen, status, setup guide), BackupSection
-src/components/      NumInput, RestTimer, LineChart (hand-written SVG; optional per-point value/date labels), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Statistik and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training), BodyMap (front/back body SVG with trained muscle groups, props only)
+src/screens/         Home (overview + weigh-in prompt; today card with the body graphic of today's muscles; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar; finished trainings and cardio entries in the selected day's card can be deleted with an inline confirm), Workout (the active set, first open or last focused, has a −/+ line: reps 1, kg = slot increment or 2,5, seconds 5, never below 0), HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History (Statistik: Training with per-exercise cards grouped Pull/Push/Skills/Sonstiges, Alle Trainings, Ernährung with cards Körpergewicht (last 7 days), Kalorien and Protein (bars with goal line, tap → Schritte & Kalorien) and a weight subpage (curve + editable list), Cardio with "Cardio pro Woche" (8 weeks) plus the list), PlanEditor, Settings (profile, Darstellung, Apple Health + Daten & Backup), HealthSection (server address, key, shortcut name, Verbindung testen, status, setup guide), BackupSection
+src/components/      NumInput, RestTimer, LineChart (hand-written SVG; optional per-point value/date labels), BarChart (hand-written SVG bars with optional goal line), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Statistik and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training), BodyMap (front/back body SVG with trained muscle groups, props only)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
 server/              standalone Cloudflare Worker relaying daily Health totals (own package.json with wrangler; not part of the app build; tests in server/src/*.test.ts run with the root npm test; setup in server/README.md)
@@ -154,7 +156,7 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   muscles, stronger the more sets; no graphic on rest/cardio days or while a session
   runs. Editing muscles comes later with the plan editor.
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
-  exists (one entry per day; entry on Home, history under Statistik → Ernährung).
+  exists (one entry per day; entry on Home, history is the weight subpage under Statistik → Ernährung).
   Calories, protein and steps can be entered by hand or come from Apple Health.
 
 ## Design
