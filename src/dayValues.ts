@@ -24,6 +24,24 @@ export function mergeDay(existing: DayValues | undefined, date: string, patch: D
   return next;
 }
 
+/** Von Hand gesetzte Felder; alte manuelle Zeilen ohne Liste gelten komplett als manuell. */
+export function manualFields(row: DayValues | undefined): DayField[] {
+  if (!row) return [];
+  if (row.manual) return row.manual;
+  if (row.source === 'manual') return FIELDS.filter((k) => row[k] != null);
+  return [];
+}
+
+/**
+ * Manuelle Felder nach einer Eingabe von Hand; next sind die Werte der Zeile danach.
+ * Bisher manuelle Felder mit Wert bleiben manuell, dazu kommt jedes geänderte Feld.
+ * Ein unverändert übernommener (vorausgefüllter) Wert wird nicht manuell, ein geleertes Feld nicht mehr.
+ */
+export function nextManual(existing: DayValues | undefined, next: DayPatch): DayField[] {
+  const before = manualFields(existing);
+  return FIELDS.filter((k) => next[k] != null && (before.includes(k) || next[k] !== existing?.[k]));
+}
+
 /** Die letzten 7 lokalen Tage, ältester zuerst, heute zuletzt. */
 export function stepsWeek(days: DayValues[], now: number): { date: string; steps: number | null }[] {
   const byDate = new Map(days.map((d) => [d.date, d]));
@@ -44,6 +62,10 @@ export function dayTrend(days: DayValues[], field: DayField, now: number): { x: 
     .map((d) => ({ x: dayTs(d.date), y: d[field]!, label: fmtShortDate(dayTs(d.date)) }));
 }
 
+function isFieldList(x: unknown): boolean {
+  return Array.isArray(x) && x.every((k) => FIELDS.includes(k as DayField)) && new Set(x).size === x.length;
+}
+
 export function isDayValuesList(x: unknown): x is DayValues[] {
   if (!Array.isArray(x)) return false;
   const seen = new Set<string>();
@@ -55,6 +77,7 @@ export function isDayValuesList(x: unknown): x is DayValues[] {
       const n = v[k];
       if (n !== undefined && (typeof n !== 'number' || !Number.isFinite(n) || n < 0)) return false;
     }
+    if (v.manual !== undefined && !isFieldList(v.manual)) return false;
     if (v.source !== 'manual' && v.source !== 'health') return false;
     if (typeof v.updatedAt !== 'number' || !Number.isFinite(v.updatedAt)) return false;
     seen.add(v.date);

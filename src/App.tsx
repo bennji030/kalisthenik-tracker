@@ -7,6 +7,7 @@ import { ensureCardioDayInDb } from './cardio';
 import { activeSession } from './sessions';
 import { adjacentTab } from './tabSwipe';
 import { useTabSwipe } from './useTabSwipe';
+import { useHealthSync } from './useHealthSync';
 import { Home } from './screens/Home';
 import { Training } from './screens/Training';
 import { Workout } from './screens/Workout';
@@ -50,6 +51,8 @@ export function App() {
       setReady(true);
     })();
   }, []);
+
+  useHealthSync(ready);
 
   const storedTheme = useLiveQuery(async () => ({ value: await getMeta<unknown>('theme', undefined) }), []);
   useEffect(() => {

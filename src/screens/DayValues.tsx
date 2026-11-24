@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, saveDay, type DayValues as DayRowData } from '../db';
 import { LineChart } from '../components/LineChart';
 import { NumInput } from '../components/NumInput';
-import { dayTrend, isValidKcal, isValidProtein, isValidSteps, type DayField, type DayPatch } from '../dayValues';
+import { dayTrend, isValidKcal, isValidProtein, isValidSteps, nextManual, type DayField, type DayPatch } from '../dayValues';
 import { isDayKey } from '../profile';
 import { fmtDate, fmtInt } from '../util';
 import { dayKey, dayTs } from '../weight';
@@ -151,6 +151,7 @@ function DayRow({ d }: { d: DayRowData }) {
     if (v.steps != null) next.steps = v.steps;
     if (v.kcal != null) next.kcal = v.kcal;
     if (v.proteinG != null) next.proteinG = v.proteinG;
+    next.manual = nextManual(d, next);
     await db.days.put(next);
     close();
   };

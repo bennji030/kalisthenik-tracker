@@ -6,6 +6,8 @@ import { cardioOnly, strengthOnly } from '../cardio';
 import { goalProgress, parseGoals, stepsWeek, type Goals } from '../dayValues';
 import { fmtInt } from '../util';
 import { dayKey } from '../weight';
+import { isConfigured, parseHealthConfig, shortcutUrl } from '../health';
+import { forceNextSync } from '../healthSync';
 import type { HabitKind } from '../screens/HabitMonths';
 import type { DayView } from '../screens/DayValues';
 
@@ -43,10 +45,20 @@ function SetupButton({ goSettings }: { goSettings: () => void }) {
   return <button className="btn btn-small habit-setup" onClick={goSettings}>Einrichten</button>;
 }
 
-function StepsCard({ days, goals, now, onOpen, goSettings }: {
+/** Startet den Kurzbefehl; nach der Rückkehr in die App wird sofort abgeholt. */
+function RefreshButton({ shortcut }: { shortcut: string }) {
+  const run = () => {
+    forceNextSync();
+    window.location.href = shortcutUrl(shortcut);
+  };
+  return <button className="btn btn-small habit-setup" onClick={run}>Jetzt aktualisieren</button>;
+}
+
+function StepsCard({ days, goals, now, shortcut, onOpen, goSettings }: {
   days: DayValues[];
   goals: Goals;
   now: number;
+  shortcut: string | null; // gesetzt, wenn Apple Health eingerichtet ist
   onOpen: () => void;
   goSettings: () => void;
 }) {
@@ -60,11 +72,9 @@ function StepsCard({ days, goals, now, onOpen, goSettings }: {
           <span className="habit-num">{fmtInt(steps)}</span> <span className="muted small">/ {fmtInt(goals.steps)}</span>
         </div>
       ) : (
-        <>
-          <p className="muted small">Noch keine Schritte</p>
-          <SetupButton goSettings={goSettings} />
-        </>
+        <p className="muted small">Noch keine Schritte</p>
       )}
+      {shortcut != null ? <RefreshButton shortcut={shortcut} /> : steps == null && <SetupButton goSettings={goSettings} />}
       <div className="step-bars" aria-hidden="true">
         {week.map((d) => {
           const p = goalProgress(d.steps, goals.steps);
@@ -138,7 +148,8 @@ export function Habits({ templateCount, goHabit, goWeight, goDay, goSettings }: 
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
   const days = useLiveQuery(() => db.days.toArray(), []);
   const goals = useLiveQuery(async () => parseGoals(await getMeta<unknown>('goals', undefined)), []);
-  if (!weights || !sessions || !days || !goals) return null;
+  const health = useLiveQuery(async () => parseHealthConfig(await getMeta<unknown>('health', undefined)), []);
+  if (!weights || !sessions || !days || !goals || !health) return null;
   const now = Date.now();
   const weighed = new Set(weights.map((w) => w.date));
   // Cardio zählt nicht fürs Wochenziel; reine Cardio-Tage bekommen eigene Punkte.
@@ -158,7 +169,7 @@ export function Habits({ templateCount, goHabit, goWeight, goDay, goSettings }: 
           title="Trainings" tab="sessions" onOpen={goHabit}
           dots={trainDots} count={weekSessionCount(strength, now)} target={templateCount}
         />
-        <StepsCard days={days} goals={goals} now={now} onOpen={() => goDay('steps')} goSettings={goSettings} />
+        <StepsCard days={days} goals={goals} now={now} shortcut={isConfigured(health) ? health.shortcut : null} onOpen={() => goDay('steps')} goSettings={goSettings} />
         <KcalCard today={days.find((d) => d.date === dayKey(now))} goals={goals} onOpen={() => goDay('kcal')} goSettings={goSettings} />
         <WeightCard entries={weights} onOpen={goWeight} />
       </div>

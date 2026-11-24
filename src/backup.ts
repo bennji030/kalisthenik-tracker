@@ -1,5 +1,5 @@
 import { db, setMeta } from './db';
-import { BACKUP_APP, isBackup } from './backupFormat';
+import { BACKUP_APP, DEVICE_META_KEYS, exportMeta, importMeta, isBackup } from './backupFormat';
 import { isWeightList } from './weight';
 import { isDayValuesList } from './dayValues';
 
@@ -11,7 +11,7 @@ export async function exportBackup(): Promise<'shared' | 'downloaded' | 'cancell
     exercises: await db.exercises.toArray(),
     templates: await db.templates.toArray(),
     sessions: await db.sessions.toArray(),
-    meta: (await db.meta.toArray()).filter((m) => m.key !== 'lastBackup'),
+    meta: exportMeta(await db.meta.toArray()),
     weights: await db.weights.toArray(),
     days: await db.days.toArray(),
   };
@@ -47,11 +47,13 @@ export async function importBackup(file: File): Promise<number> {
   const hasDays = 'days' in data;
   if (hasDays && !isDayValuesList(data.days)) throw new Error('Die Tageswerte im Backup sind ungültig.');
   await db.transaction('rw', [db.exercises, db.templates, db.sessions, db.meta, db.weights, db.days], async () => {
+    // Apple-Health-Einstellungen gehören zum Gerät und bleiben beim Import stehen.
+    const device = await db.meta.bulkGet(DEVICE_META_KEYS);
     await Promise.all([db.exercises.clear(), db.templates.clear(), db.sessions.clear(), db.meta.clear()]);
     await db.exercises.bulkAdd(data.exercises);
     await db.templates.bulkAdd(data.templates);
     await db.sessions.bulkAdd(data.sessions);
-    await db.meta.bulkAdd(data.meta ?? []);
+    await db.meta.bulkAdd(importMeta(data.meta ?? [], device));
     if (hasWeights) {
       await db.weights.clear();
       await db.weights.bulkAdd(data.weights);

@@ -8,6 +8,7 @@ import { ageOn, isValidBirthDate, isValidBodyFat, isValidHeight, parseProfile, t
 import type { HistoryTab } from './History';
 import { parseThemePref, type ThemePref } from '../theme';
 import { BackupSection } from './BackupSection';
+import { HealthSection } from './HealthSection';
 import { isValidKcalGoal, isValidProteinGoal, isValidStepsGoal, parseGoals, type Goals } from '../dayValues';
 
 export function Settings({ toast, onBack, goHistory }: {
@@ -24,6 +25,7 @@ export function Settings({ toast, onBack, goHistory }: {
       </header>
       {stored && <ProfileCard profile={parseProfile(stored.value, Date.now())} goHistory={goHistory} />}
       <ThemeCard />
+      <HealthSection toast={toast} />
       <BackupSection toast={toast} />
     </div>
   );
