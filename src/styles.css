@@ -231,7 +231,18 @@ p { margin: 0; }
 .chart { width: 100%; height: auto; }
 .chart-grid { stroke: var(--line); stroke-width: 1; }
 .chart-tick { fill: var(--muted); font-size: 10px; }
+.chart-value { fill: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; stroke: var(--card); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.stat-group { display: flex; flex-direction: column; gap: 8px; }
+.stat-heading { margin: 8px 0 0; font-size: 17px; }
+.stat-card { display: block; width: 100%; border: 0; color: inherit; text-align: left; font: inherit; }
+.stat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.stat-name { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.stat-title { font-weight: 600; }
+.stat-change { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+.stat-change.up { color: var(--ok); }
+.stat-change.down { color: var(--danger); }
+.list > li.cardio-row { display: flex; justify-content: space-between; gap: 12px; padding: 14px; }
 .chart-dot { fill: var(--accent); }
 .chart-dot-muted { fill: var(--muted); }
 .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
