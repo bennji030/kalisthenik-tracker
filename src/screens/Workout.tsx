@@ -5,6 +5,7 @@ import { addedEntry, appendSlot, isAdded, planQuestions, slotFromEntry } from '.
 import { NumInput } from '../components/NumInput';
 import { RestTimer, beep, successSound, unlockAudio } from '../components/RestTimer';
 import { parseTrainingPrefs } from '../lockScreen';
+import { native, nextExercise } from '../native';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { backdatedLabel, flameGain, sessionStats, trainingNumber, type FinishStats } from '../finishSummary';
 import { strengthOnly } from '../cardio';
@@ -61,6 +62,10 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
   const first = useRef(true);
   const prefsRaw = useLiveQuery(async () => ({ value: await getMeta<unknown>('training', undefined) }), []);
   const prefs = parseTrainingPrefs(prefsRaw?.value);
+  // Übung für die Pausen-Mitteilung, bleibt für −15/+15 erhalten.
+  const restExercise = useRef<string | null>(null);
+
+  useEffect(() => { void native.requestPermission(); }, []);
 
   useEffect(() => {
     void db.sessions.get(sessionId).then((s) => setSession(s ?? null));
@@ -74,7 +79,11 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
   }, [session]);
 
   const success = summary != null && !questions;
-  useEffect(() => { if (success && prefs.restSound) successSound(); }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!success) return;
+    void native.success();
+    if (prefs.restSound) successSound();
+  }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Bildschirm während des Trainings anlassen.
   useEffect(() => {
@@ -100,6 +109,8 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
     const r = endAt == null ? null : { endAt, total: total ?? rest?.total ?? 0 };
     setRest(r);
     saveRest(r);
+    if (endAt == null) void native.cancelRest();
+    else void native.scheduleRest(endAt, restExercise.current, prefs.restSound);
   };
 
   const toggleDone = (ei: number, si: number) => {
@@ -116,7 +127,15 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
         return x;
       }),
     }));
-    if (done && e.restSec > 0) setRestTimer(Date.now() + e.restSec * 1000, e.restSec);
+    if (done) void native.tap();
+    if (done && e.restSec > 0) {
+      const entries = session.entries.map((en, i) => ({
+        name: exMap.get(en.exerciseId)?.name,
+        sets: en.sets.map((x, j) => ({ done: i === ei && j === si ? true : x.done })),
+      }));
+      restExercise.current = nextExercise(entries, ei);
+      setRestTimer(Date.now() + e.restSec * 1000, e.restSec);
+    }
   };
 
   const addSet = (ei: number) =>
