@@ -117,18 +117,18 @@ function ExerciseCard({ ex, sessions, open }: { ex: Exercise; sessions: Session[
   const change = windowChange(win);
   const sub = win.length === 1 ? 'Letztes Training' : win.length < WINDOW ? `Letzte ${win.length} Trainings` : `Letzte ${WINDOW} Trainings`;
   return (
-    <section className="card stat-card">
-      <button className="stat-head" onClick={open}>
+    <button className="card stat-card" onClick={open}>
+      <span className="stat-head">
         <span className="stat-name">
           <span className="stat-title">{ex.name}</span>
           <span className="muted small">{sub}</span>
         </span>
         {change !== null && <span className={`stat-change ${change > 0 ? 'up' : change < 0 ? 'down' : ''}`}>{fmtChange(change, ex.type)}</span>}
-      </button>
+      </span>
       <LineChart unit={UNIT[ex.type]} pointLabels
         points={win.map((p, i) => ({ x: i, y: p.value, label: fmtShortDate(p.ts) }))}
         emptyText="Ab zwei Trainings gibt es hier eine Kurve." />
-    </section>
+    </button>
   );
 }
 
