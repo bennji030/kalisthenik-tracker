@@ -19,7 +19,7 @@ export function weightWeekChange(points: WeightEntry[]): number | null {
 }
 
 /** Genau 7 Tage (heute zuletzt); Tage ohne Zeile oder ohne das Feld sind null. */
-export function dayBars(days: DayValues[], field: 'kcal' | 'proteinG', now: number): { date: string; value: number | null }[] {
+export function dayBars(days: DayValues[], field: 'kcal' | 'proteinG' | 'burnedKcal', now: number): { date: string; value: number | null }[] {
   const byDate = new Map(days.map((d) => [d.date, d]));
   return lastDayKeys(now).slice(-7).map((date) => ({ date, value: byDate.get(date)?.[field] ?? null }));
 }
