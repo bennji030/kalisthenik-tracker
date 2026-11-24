@@ -139,7 +139,8 @@ private func dailySums(store: HKHealthStore, metric: Metric, start: Date, end: D
             let formatter = dayFormatter()
             let unit = metric.unit
             var sums: [String: Double] = [:]
-            collection.enumerateStatistics(from: start, to: end) { statistics, _ in
+            // Eine einfache Schleife statt enumerateStatistics: kein Block, der sums von außen verändert.
+            for statistics in collection.statistics() {
                 if let sum = statistics.sumQuantity() {
                     sums[formatter.string(from: statistics.startDate)] = sum.doubleValue(for: unit)
                 }
