@@ -236,8 +236,8 @@ function CardioList({ sessions }: { sessions: Session[] }) {
   if (sessions.length === 0) return <p className="muted">Noch keine Cardio-Einträge. Abhaken geht auf Home oder im Training-Tab.</p>;
   const weeks = cardioWeeks(sessions, Date.now());
   return (
-    <>
-    <section className="card readable">
+    <div className="readable stack">
+    <section className="card">
       <h2>Cardio pro Woche</h2>
       <p className="muted small">Letzte 8 Wochen</p>
       {weeks.every((w) => w.count === 0)
@@ -252,7 +252,7 @@ function CardioList({ sessions }: { sessions: Session[] }) {
         </li>
       ))}
     </ul>
-    </>
+    </div>
   );
 }
 
