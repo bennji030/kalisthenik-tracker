@@ -21,6 +21,8 @@ export type SyncResult =
 export const DEFAULT_SHORTCUT = 'Calisthenics Sync';
 export const SYNC_INTERVAL_MS = 60000;
 export const TIMEOUT_MS = 10000;
+/** Größte Antwort, die gelesen wird (30 Tage brauchen nur wenige kB). */
+export const MAX_BODY = 100000;
 
 const FIELDS: DayField[] = ['steps', 'kcal', 'proteinG'];
 
@@ -194,7 +196,7 @@ export function mergeHealth(existing: DayValues | undefined, remote: RemoteDay, 
 
 export type FetchFn = (input: string, init: RequestInit) => Promise<Response>;
 
-/** Eine Anfrage mit Schlüssel im Header und 10 s Zeitlimit; null = keine Verbindung. */
+/** Eine Anfrage mit Schlüssel im Header und 10 s Zeitlimit; null = keine Verbindung, zu große Antwort = leerer Text. */
 async function request(fetchFn: FetchFn, url: string, method: 'GET' | 'DELETE', token: string): Promise<{ status: number; body: string } | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
@@ -206,7 +208,9 @@ async function request(fetchFn: FetchFn, url: string, method: 'GET' | 'DELETE', 
       credentials: 'omit',
       signal: ctrl.signal,
     });
-    return { status: res.status, body: await res.text() };
+    if (Number(res.headers.get('Content-Length')) > MAX_BODY) return { status: res.status, body: '' };
+    const body = await res.text();
+    return { status: res.status, body: body.length > MAX_BODY ? '' : body };
   } catch {
     return null;
   } finally {
