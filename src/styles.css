@@ -250,7 +250,7 @@ p { margin: 0; }
 .settings-val { color: var(--text); font-variant-numeric: tabular-nums; }
 .health-guide { display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
 .health-guide ol, .health-guide ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
-.health-guide ul { margin-top: 6px; }
+.health-guide li > ol, .health-guide li > ul { margin-top: 6px; }
 .health-guide code { font-size: 13px; overflow-wrap: anywhere; color: var(--text); }
 .copy-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .copy-row .btn { min-height: 44px; }
@@ -320,7 +320,7 @@ select { width: 100%; appearance: none; }
 .habit-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .habit-bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.25s ease; }
 .habit-val { font-variant-numeric: tabular-nums; }
-.habit-setup { position: relative; z-index: 1; align-self: flex-start; min-height: 44px; margin-top: 4px; }
+.habit-setup { position: relative; z-index: 1; align-self: flex-start; min-height: 44px; margin-top: 4px; padding-inline: 8px; }
 .step-bars { display: flex; align-items: flex-end; gap: 4px; height: 44px; margin: 8px 0 2px; }
 .step-bar { flex: 1; min-height: 3px; border-radius: 3px; background: var(--accent); }
 .step-bar-ok { background: var(--ok); }

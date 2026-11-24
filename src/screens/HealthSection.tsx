@@ -130,6 +130,10 @@ function Guide({ base, token, shortcut, copy }: {
   const server = base ?? '<Server>';
   return (
     <div className="health-guide">
+      <p>
+        Ein Kurzbefehl auf deinem iPhone schickt Schritte, Kalorien und Protein aus Apple Health an deinen Server,
+        die App holt sie dort ab. Server und Schlüssel brauchst du in Schritt 2.
+      </p>
       <div className="copy-row">
         <span className="copy-label">Server</span>
         <code>{server}</code>
@@ -142,24 +146,39 @@ function Guide({ base, token, shortcut, copy }: {
       </div>
       <ol>
         <li>
-          <b>MyFitnessPal:</b> „Apps &amp; Geräte“ → „Health“ → „Nahrungsenergie“ und „Protein“ teilen.
+          <b>MyFitnessPal</b> (in der App MyFitnessPal): Mehr → Einstellungen → „Apps &amp; Geräte“ → „Health“.
+          Dort „Nahrungsenergie“ und „Protein“ einschalten, damit MyFitnessPal sie an Health schickt.
         </li>
         <li>
-          <b>Kurzbefehl „{shortcut}“</b> in der App Kurzbefehle anlegen:
-          <ul>
-            <li>„Health-Samples suchen“, je eine für „Schritte“, „Nahrungsenergie“ und „Protein“, ab heute</li>
-            <li>„Statistiken berechnen“ mit „Summe“ für jede der drei</li>
-            <li>„Datum formatieren“ (heute) mit eigenem Format <code>yyyy-MM-dd</code></li>
+          <b>Kurzbefehl</b> (in der App Kurzbefehle): mit „+“ einen neuen Kurzbefehl anlegen und genau
+          „{shortcut}“ nennen; sonst findet „Jetzt aktualisieren“ ihn nicht. Dann diese Aktionen nacheinander hinzufügen:
+          <ol type="a">
+            <li>„Health-Samples suchen“: Typ „Schritte“, Filter „Startdatum ist heute“.</li>
+            <li>„Statistiken berechnen“ direkt darunter: „Summe“ der gefundenen Samples.</li>
             <li>
-              „Inhalte von URL abrufen“: Methode <code>PUT</code>, URL <code>{server}/v1/days/&lt;Datum&gt;</code>,
-              Header <code>Authorization</code> = <code>Bearer &lt;Schlüssel&gt;</code>, Hauptteil JSON mit den
-              Feldern <code>steps</code>, <code>kcal</code>, <code>proteinG</code>
+              a und b noch zweimal: einmal mit Typ „Nahrungsenergie“, einmal mit Typ „Protein“, jeweils mit eigenem
+              „Statistiken berechnen“ (Summe). Am Ende hast du drei Summen.
             </li>
-          </ul>
+            <li>„Aktuelles Datum“, danach „Datum formatieren“: Datumsformat „Benutzerdefiniert“, Format <code>yyyy-MM-dd</code>.</li>
+            <li>
+              „Inhalte von URL abrufen“, dann auf „Mehr anzeigen“ tippen:
+              <ul>
+                <li>URL: <code>{server}/v1/days/</code> und direkt dahinter die Variable „Formatiertes Datum“ (das ist <code>&lt;Datum&gt;</code>)</li>
+                <li>Methode: <code>PUT</code></li>
+                <li>Header: Schlüssel <code>Authorization</code>, Wert <code>Bearer &lt;Schlüssel&gt;</code> (mit Leerzeichen nach „Bearer“, Schlüssel von oben)</li>
+                <li>
+                  Hauptteil anfordern: JSON, drei Felder vom Typ „Zahl“: <code>steps</code> = Summe Schritte,{' '}
+                  <code>kcal</code> = Summe Nahrungsenergie, <code>proteinG</code> = Summe Protein
+                </li>
+              </ul>
+            </li>
+            <li>Einmal mit ▶ ausführen, dann hier „Verbindung testen“ tippen.</li>
+          </ol>
         </li>
         <li>
-          <b>Automation:</b> Kurzbefehle → Automation → „Tageszeit“, eine Automation pro Stunde (z. B. 7–22 Uhr),
-          „Sofort ausführen“, Mitteilung aus.
+          <b>Automation</b> (Kurzbefehle → Automation → „+“): „Tageszeit“, z. B. 7:00, „Täglich“, „Sofort ausführen“,
+          „Mitteilung beim Ausführen“ aus, Kurzbefehl „{shortcut}“ auswählen. Für jede weitere Stunde bis 22 Uhr eine
+          neue Automation genauso anlegen, nur die Uhrzeit ändert sich.
         </li>
         <li>
           <b>Optional:</b> Automation „App wird geöffnet“. Wenn sich die Calisthenics-Web-App dort auswählen lässt,
