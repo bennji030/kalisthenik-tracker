@@ -122,7 +122,8 @@ used mid-workout on a phone: fewest taps wins.
 There is a light token set under `:root[data-theme="light"]`; every colour token
 must be defined in both sets, and no colour literals live outside them. The theme
 preference is the `meta` key `theme` (`dark`/`light`/`system`), cached in
-localStorage for the pre-paint script in `index.html`.
+localStorage for the pre-paint script in `index.html`. Text on a `*-soft`
+background uses `--on-accent-soft` / `--on-cardio-soft`.
 
 The layout is phone-first with one breakpoint at `min-width: 700px` (nav on top,
 grids, max width 1200px); lists of cards are wrapped in `.cards` to become a grid

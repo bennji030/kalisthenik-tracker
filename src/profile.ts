@@ -20,7 +20,7 @@ export function isValidBodyFat(n: unknown): n is number {
 }
 
 /** YYYY-MM-DD, echtes Kalenderdatum. */
-function isDayKey(s: unknown): s is string {
+export function isDayKey(s: unknown): s is string {
   if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
   const [y, m, d] = s.split('-').map(Number);
   const date = new Date(y, m - 1, d);

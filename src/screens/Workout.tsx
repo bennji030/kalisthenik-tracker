@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getMeta, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, unlockAudio } from '../components/RestTimer';
-import { entryNoon, entryTimes } from '../entryDay';
+import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { entrySucceeded } from '../progression';
 import { ENTRY_DAY_KEY, type EntryDay } from '../sessions';
 import { fmtAddedKg, fmtDate, fmtKg } from '../util';
@@ -35,7 +35,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
   const entry = useLiveQuery(() => getMeta<EntryDay | null>(ENTRY_DAY_KEY, null), []);
-  const entryDay = entry?.sessionId === sessionId ? entry.day : null;
+  const entryDay = entryDayFor(entry, sessionId);
   const first = useRef(true);
 
   useEffect(() => {
@@ -110,7 +110,8 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
     await db.transaction('rw', db.sessions, db.meta, async () => {
       const e = await getMeta<EntryDay | null>(ENTRY_DAY_KEY, null);
       if (e?.sessionId === session.id) {
-        s = { ...session, ...entryTimes(e.day, session.startedAt, now) };
+        const day = entryDayFor(e, session.id);
+        if (day) s = { ...session, ...entryTimes(day, session.startedAt, now) };
         await db.meta.delete(ENTRY_DAY_KEY);
       }
       await db.sessions.put(s);

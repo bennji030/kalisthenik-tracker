@@ -103,7 +103,7 @@ export function App() {
       {!workoutId && (
         <nav className="tabbar">
           {TABS.map(([t, label]) => (
-            <button key={t} className={tab === t ? 'on' : ''} onClick={() => go(t)}>
+            <button key={t} className={tab === t ? (t === 'home' && (settings || habitView) ? 'sub' : 'on') : ''} onClick={() => go(t)}>
               <svg className="tab-icon" viewBox="0 0 24 24" aria-hidden="true">{ICONS[t]}</svg>
               <span>{label}</span>
             </button>
