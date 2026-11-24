@@ -22,6 +22,7 @@ in interactive sessions explain each step briefly before doing it.
 - No backend, accounts, analytics or tracking. A network request only when an
   issue asks for one (e.g. a food database lookup), and the app must keep working
   offline without it.
+  Exception (approved by the owner): the self-hosted mini server in `server/` (Cloudflare Worker now, own server later) that only relays daily Apple Health totals (steps, kcal, protein). The app must work fully without it.
 - The factory never deploys by hand, never pushes `main`, and pushes only
   `factory/*` branches.
 - Git identity in this repo is `bennji030` with the GitHub no-reply address (set
@@ -72,6 +73,7 @@ src/screens/         Home (overview + weigh-in prompt), Training (week calendar 
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
+server/              standalone Cloudflare Worker relaying daily Health totals (own package.json with wrangler; not part of the app build; tests in server/src/*.test.ts run with the root npm test; setup in server/README.md)
 ```
 
 Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.

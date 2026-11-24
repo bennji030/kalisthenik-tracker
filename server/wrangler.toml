@@ -1,0 +1,10 @@
+name = "kalisthenik-tracker-server"
+main = "src/worker.ts"
+compatibility_date = "2026-11-01"
+
+# The id comes from `npx wrangler kv namespace create DAYS` (see README.md).
+[[kv_namespaces]]
+binding = "DAYS"
+id = "HIER_KV_NAMESPACE_ID_EINTRAGEN"
+
+# TOKEN is a secret: set it with `npx wrangler secret put TOKEN`, never here.
