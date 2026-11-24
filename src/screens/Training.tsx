@@ -165,6 +165,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
           </div>
         )}
         </div>
+        <div className="cal-handle" aria-hidden="true" />
       </div>
 
       {active && (
