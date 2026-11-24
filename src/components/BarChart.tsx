@@ -4,14 +4,14 @@ interface Bar {
 }
 
 /** Säulen ab 0 mit Wert darüber und Label darunter; null lässt den Platz leer. `goal` zieht eine gestrichelte Linie. */
-export function BarChart({ bars, fmt, goal, tone = 'accent', unit }: { bars: Bar[]; fmt: (v: number) => string; goal?: number; tone?: 'accent' | 'cardio'; unit: string }) {
+export function BarChart({ bars, fmt, goal, tone = 'accent', label }: { bars: Bar[]; fmt: (v: number) => string; goal?: number; tone?: 'accent' | 'cardio'; label: string }) {
   const W = 340, H = 160, P = { l: 14, r: goal != null ? 40 : 14, t: 22, b: 22 };
   const max = Math.max(1, goal ?? 0, ...bars.map((b) => b.value ?? 0));
   const sy = (v: number) => H - P.b - (v / max) * (H - P.t - P.b);
   const slot = (W - P.l - P.r) / bars.length;
   const bw = Math.min(28, slot * 0.6);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`Säulen in ${unit}`}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={label}>
       <line x1={P.l} x2={W - P.r} y1={H - P.b} y2={H - P.b} className="chart-grid" />
       {goal != null && (
         <g>

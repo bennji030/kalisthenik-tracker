@@ -227,7 +227,7 @@ function DayBarCard({ title, unit, field, hint, days, goal, now, open }: {
       </span>
       {bars.every((b) => b.value === null)
         ? <p className="muted small">{hint} in den letzten 7 Tagen. Tippen zum Eintragen.</p>
-        : <BarChart unit={unit} goal={goal} fmt={fmtInt} bars={bars.map((b) => ({ label: WEEKDAYS[new Date(dayTs(b.date)).getDay()], value: b.value }))} />}
+        : <BarChart label={`${title} der letzten 7 Tage in ${unit}`} goal={goal} fmt={fmtInt} bars={bars.map((b) => ({ label: WEEKDAYS[new Date(dayTs(b.date)).getDay()], value: b.value }))} />}
     </button>
   );
 }
@@ -237,12 +237,12 @@ function CardioList({ sessions }: { sessions: Session[] }) {
   const weeks = cardioWeeks(sessions, Date.now());
   return (
     <>
-    <section className="card">
+    <section className="card readable">
       <h2>Cardio pro Woche</h2>
       <p className="muted small">Letzte 8 Wochen</p>
       {weeks.every((w) => w.count === 0)
         ? <p className="muted small">In den letzten 8 Wochen kein Cardio.</p>
-        : <BarChart tone="cardio" unit="Cardio pro Woche" fmt={fmtInt} bars={weeks.map((w) => ({ label: fmtShortDate(dayTs(w.start)), value: w.count }))} />}
+        : <BarChart tone="cardio" label="Cardio-Einheiten pro Woche der letzten 8 Wochen" fmt={fmtInt} bars={weeks.map((w) => ({ label: fmtShortDate(dayTs(w.start)), value: w.count }))} />}
     </section>
     <ul className="list">
       {sessions.map((s) => (
