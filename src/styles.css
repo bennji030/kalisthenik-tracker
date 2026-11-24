@@ -218,6 +218,7 @@ p { margin: 0; }
 
 /* Übung im Training hinzufügen */
 .add-sub { font-size: 15px; margin: 4px 0 0; }
+.add-ex .pick-list { max-height: 40vh; overflow-y: auto; overscroll-behavior: contain; }
 .pick-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .pick-list li + li { border-top: 1px solid var(--line); }
 .pick-row {
@@ -429,6 +430,16 @@ main.tab-in-next { animation: tab-in-next 0.2s ease-out; }
 main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
 @keyframes tab-in-next { from { opacity: 0; transform: translateX(48px); } }
 @keyframes tab-in-prev { from { opacity: 0; transform: translateX(-48px); } }
+/* Erfolgs-Bildschirm nach Training beenden */
+.finish-card { border: 1px solid var(--accent); display: flex; flex-direction: column; gap: 14px; animation: finish-in 0.3s ease-out; }
+.finish-card h1 { color: var(--accent); font-size: 24px; margin: 0; overflow-wrap: anywhere; }
+.finish-name { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.finish-stats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-variant-numeric: tabular-nums; }
+.finish-stats b { font-size: 18px; }
+.wo-error { color: var(--danger); margin: 0; }
+.finish-flames { margin-left: 0; }
+.finish-gain { font-size: 16px; }
+@keyframes finish-in { from { opacity: 0; transform: translateY(8px); } }
 @keyframes cal-in { from { opacity: 0; transform: translateY(-6px); } }
 .day, .day-empty { min-height: 44px; }
 .day {
@@ -449,6 +460,7 @@ main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
   .cal-settle, .cal-settle .cal-rows, .cal-settle .cal-week, .cal-settle .cal-month { transition: none; }
   main.tab-settle { transition: none; }
   main.tab-in-next, main.tab-in-prev { animation: none; }
+  .finish-card { animation: none; }
 }
 
 @media (hover: hover) and (pointer: fine) {
