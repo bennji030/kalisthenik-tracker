@@ -466,8 +466,11 @@ dem iPhone. Die Reihenfolge ist: Teil 1 (Schritte 1 bis 11) → Live Activity
 Im Ordner `kalisthenik-tracker`:
 
 ```
-git pull
+git pull --rebase
 ```
+
+Dasselbe gilt später vor jedem `git push`: erst `git pull --rebase`, dann
+pushen. Niemals `--force` verwenden.
 
 ```
 cd native
@@ -563,7 +566,7 @@ die App, höchstens einmal pro Minute.
 
 | Symptom | Was tun |
 | --- | --- |
-| „Personal development teams … do not support the HealthKit capability“ oder HealthKit lässt sich nicht hinzufügen | Mit einer kostenlosen Apple-ID (Personal Team) erlaubt Apple HealthKit nicht. Zwei Wege: das bezahlte **Apple Developer Program** (99 $ im Jahr) abschließen und dessen Team in Schritt 6 wählen. Oder die Capability HealthKit wieder entfernen (im Reiter Signing & Capabilities auf das `x` am Abschnitt HealthKit klicken): die App läuft dann ganz normal weiter, Schritte und Kalorien trägt man von Hand ein. Die Fehlermeldung dazu steht nur unter Einstellungen → Apple Health. |
+| „Personal development teams … do not support the HealthKit capability“ oder HealthKit lässt sich nicht hinzufügen | Mit einer kostenlosen Apple-ID (Personal Team) ist HealthKit möglicherweise nicht verfügbar – dann gibt es zwei Wege: das bezahlte **Apple Developer Program** (99 $ im Jahr) abschließen und dessen Team in Schritt 6 wählen. Oder die Capability HealthKit wieder entfernen (im Reiter Signing & Capabilities auf das `x` am Abschnitt HealthKit klicken): die App läuft dann ganz normal weiter, Schritte und Kalorien trägt man von Hand ein. Die Fehlermeldung dazu steht nur unter Einstellungen → Apple Health. |
 | „Zugriff auf Apple Health nicht möglich“ in der App, in der Xcode-Konsole „Missing com.apple.developer.healthkit entitlement“ | Die Capability HealthKit fehlt beim Target App. Hinzufügen, siehe 17.3, dann wieder ▶. |
 | App stürzt ab, sobald man „Zugriff auf Apple Health erlauben“ antippt | `NSHealthShareUsageDescription` fehlt in der `Info.plist` der App. Eintragen, siehe 17.4. |
 | „Apple Health ist in dieser App-Version nicht eingebaut.“ in der App | Das Plugin ist nicht angemeldet: `HealthDaysPlugin.swift` gehört zum Target App (17.2), Custom Class `MainViewController` im Storyboard (16.5), `npm run sync` ausgeführt (17.1). |

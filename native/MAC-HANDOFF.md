@@ -20,15 +20,16 @@ Ziel: Die Calisthenics-App läuft als native App auf dem iPhone, in dieser Reihe
 3. Teil 3: Apple Health direkt über HealthKit (README Abschnitt 17)
 
 Arbeite auf dem Branch factory/042-native-app-teil-3. Er enthält alle drei Teile.
-Prüfe zuerst mit `git branch --show-current`, dass du darauf bist, und mit
-`git config user.email`, dass die no-reply-Adresse aus README Schritt 3 gesetzt ist.
+Prüfe zuerst mit `git branch --show-current`, dass du darauf bist, mit
+`git config user.name`, dass dort bennji030 steht, und mit `git config user.email`,
+dass die no-reply-Adresse aus README Schritt 3 gesetzt ist.
 
 Die Swift-Dateien in native/ios-src/ wurden ohne Mac geschrieben und nie kompiliert.
 Deine Hauptaufgabe: sie mit dem Xcode-Build zum Laufen bringen. Wenn Xcode Fehler zeigt,
 korrigiere die Dateien in native/ios-src/ (das Xcode-Projekt verweist direkt darauf),
 baue erneut, und committe jede Korrektur einzeln auf dem Branch.
 
-Führe mich Schritt für Schritt durch die README. Ich bin keine Entwicklerin: erkläre
+Führe mich Schritt für Schritt durch die README. Ich programmiere nicht selbst: erkläre
 jeden Schritt kurz auf Deutsch, bevor du ihn ausführst, und sag mir genau, was ich in
 Xcode oder auf dem iPhone anklicken soll. Alles, was im Terminal geht, machst du selbst.
 Mach erst mit dem nächsten Teil weiter, wenn die Testliste des vorherigen geklappt hat
@@ -37,6 +38,8 @@ Mach erst mit dem nächsten Teil weiter, wenn die Testliste des vorherigen gekla
 Regeln, die immer gelten:
 - Push nur auf factory/042-native-app-teil-3. Niemals auf main pushen, nichts mergen,
   nichts von Hand deployen. Der Pull Request bleibt ein Entwurf.
+- Vor jedem Push `git pull --rebase`: der andere Laptop kann auf denselben Branch pushen.
+  Niemals `--force` (auch nicht `--force-with-lease`).
 - Git-Identität nur repo-lokal: bennji030 mit der no-reply-Adresse aus README Schritt 3.
   Nie eine andere E-Mail-Adresse committen.
 - Die Web-App bleibt, wie sie ist. App-Code spricht nur über src/native.ts mit der Hülle,
@@ -84,8 +87,10 @@ sind schon erledigt?) und sag mir dann, womit wir weitermachen.
   `{ days: [{ date: "YYYY-MM-DD", steps?, kcal?, proteinG?, activeKcal?, basalKcal? }] }`,
   nur diese Schlüssel, Zahlen ≥ 0. Jeder andere Schlüssel macht die ganze
   Antwort ungültig („Ungültige Antwort von Apple Health“).
-- **Kostenlose Apple-ID:** HealthKit braucht vermutlich das bezahlte Apple
-  Developer Program. Was dann zu tun ist, steht in README 17.8, erste Zeile.
+- **Kostenlose Apple-ID:** Mit einer kostenlosen Apple-ID (Personal Team) ist
+  HealthKit möglicherweise nicht verfügbar – dann entweder das bezahlte Apple
+  Developer Program nutzen oder die Capability HealthKit wieder entfernen und
+  die Werte von Hand eintragen. Die Schritte stehen in README 17.8, erste Zeile.
 
 ## 3. Regeln aus CLAUDE.md
 
@@ -160,11 +165,19 @@ sind schon erledigt?) und sag mir dann, womit wir weitermachen.
    auf dem Mac nicht vorhanden. Deshalb läuft die native Arbeit hier **ohne**
    Factory: Korrekturen an `native/` werden direkt auf
    `factory/042-native-app-teil-3` committet (kurze Commit-Nachricht, eine Zeile,
-   Englisch, Imperativ) und gepusht:
+   Englisch, Imperativ) und gepusht. Vor jedem Push erst die Commits vom
+   anderen Laptop holen, denn die Factory dort kann auf denselben Branch pushen:
+
+   ```
+   git pull --rebase
+   ```
 
    ```
    git push origin factory/042-native-app-teil-3
    ```
+
+   **Niemals `--force`** (auch nicht `--force-with-lease`). Lehnt GitHub den Push
+   ab, noch einmal `git pull --rebase` und dann erneut pushen.
 
 4. **`/factory run`** ist nur für andere, neue Issues mit dem Label `factory`
    gedacht, nicht für diese Übergabe. Nicht starten, solange der Laptop
