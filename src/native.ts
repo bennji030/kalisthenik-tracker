@@ -4,6 +4,7 @@ import type { NowPlayingEntry } from './lockScreen';
 
 export interface Bridge {
   nativePromise(plugin: string, method: string, options?: unknown): Promise<unknown>;
+  isPluginAvailable?(name: string): boolean;
 }
 
 export const REST_NOTICE_ID = 1;
@@ -24,6 +25,14 @@ export function nextExercise(entries: NowPlayingEntry[], ei: number): string | n
   return entries.find(open)?.name ?? null;
 }
 
+/** Nächster Satz nach der Pause für die Live Activity, z. B. „Dips“ / „Satz 2/4“; gleiche Übungsregel wie nextExercise. */
+export function nextSet(entries: NowPlayingEntry[], ei: number): { exercise: string; set: string } | null {
+  const open = (e: NowPlayingEntry | undefined) => !!e?.name && e.sets.some((s) => !s.done);
+  const e = open(entries[ei]) ? entries[ei] : entries.find(open);
+  if (!e) return null;
+  return { exercise: e.name!, set: `Satz ${e.sets.findIndex((s) => !s.done) + 1}/${e.sets.length}` };
+}
+
 export function restNotice(exercise: string | null): { title: string; body: string } {
   return { title: 'Pause vorbei', body: exercise ? `Weiter mit ${exercise}` : 'Weiter geht’s' };
 }
@@ -34,6 +43,9 @@ export interface Native {
   cancelRest(): Promise<void>;
   tap(): Promise<void>;
   success(): Promise<void>;
+  startRest(endAt: number, exercise: string, set: string, now?: number): Promise<void>;
+  updateRest(endAt: number, now?: number): Promise<void>;
+  endRest(): Promise<void>;
 }
 
 export function createNative(bridge: Bridge | null): Native {
@@ -46,6 +58,10 @@ export function createNative(bridge: Bridge | null): Native {
     return queue;
   };
   const cancelRest = () => call('LocalNotifications', 'cancel', { notifications: [{ id: REST_NOTICE_ID }] });
+  // Live Activity: das Plugin gibt es nur, wenn es in Xcode von Hand eingebaut wurde (native/README.md, Abschnitt 16).
+  const activity = (method: string, options?: unknown): Promise<void> =>
+    bridge?.isPluginAvailable?.('RestActivity') === true ? call('RestActivity', method, options) : Promise.resolve();
+  const endRest = () => activity('endRest');
   return {
     requestPermission() {
       if (!bridge || asked) return Promise.resolve();
@@ -66,6 +82,15 @@ export function createNative(bridge: Bridge | null): Native {
     cancelRest,
     tap: () => call('Haptics', 'impact', { style: 'LIGHT' }),
     success: () => call('Haptics', 'notification', { type: 'SUCCESS' }),
+    startRest(endAt, exercise, set, now = Date.now()) {
+      if (endAt <= now) return endRest();
+      return activity('startRest', { endsAt: endAt, exercise, set });
+    },
+    updateRest(endAt, now = Date.now()) {
+      if (endAt <= now) return endRest();
+      return activity('updateRest', { endsAt: endAt });
+    },
+    endRest,
   };
 }
 

@@ -16,6 +16,9 @@ Das Terminal findest du unter Programme → Dienstprogramme → Terminal (oder
 - Die Web-App (https://bennji030.github.io/kalisthenik-tracker/) bleibt genau so,
   wie sie ist.
 - Der Pull Request wird **nicht gemergt**, bevor der Test auf dem Mac geklappt hat.
+- Die Live Activity (Pause auf dem Sperrbildschirm und in der Dynamic Island) ist
+  ein eigener, **noch ungetesteter** Zusatz: siehe Abschnitt 16. Erst die
+  Schritte 1 bis 11 erledigen.
 
 ## 2. Voraussetzungen
 
@@ -229,8 +232,8 @@ Dann in Xcode auf ▶ klicken.
   erhalten, solange die App nicht gelöscht wird.
 - Apple-Health-Sync funktioniert in der nativen App noch nicht: der Server erlaubt
   nur die Web-Adresse. Das kommt in einem späteren Schritt.
-- Die Live Activity (Pause auf dem Sperrbildschirm) kommt in einem eigenen
-  Folge-Issue.
+- Die Live Activity (Pause auf dem Sperrbildschirm) ist **ungetestet** und wird
+  in Xcode von Hand eingebaut: siehe Abschnitt 16.
 
 ## 14. Typische Fehler
 
@@ -259,3 +262,169 @@ So kommt der Fehlertext in den Chat:
    ⌘C kopieren.
 3. Alles in den Chat einfügen (⌘V) und dazuschreiben, **bei welchem Schritt**
    (Nummer) es passiert ist.
+
+## 16. Live Activity (Pause auf dem Sperrbildschirm)
+
+> **Achtung, ungetestet.** Die vier Swift-Dateien in `native/ios-src/` wurden
+> ohne Mac geschrieben. Sie konnten weder kompiliert noch ausprobiert werden.
+> Kompiliert und nachgebessert wird erst hier auf dem Mac. Es ist also normal,
+> wenn Xcode beim ersten Versuch Fehler zeigt: den Fehlertext wie in Schritt 15
+> in den Chat kopieren, dann wird die Datei korrigiert.
+
+Die Live Activity zeigt die laufende Pause mit Countdown auf dem Sperrbildschirm
+und in der Dynamic Island, dazu die nächste Übung und den nächsten Satz.
+
+**Voraussetzung:** Die Schritte 1 bis 11 haben geklappt, die App läuft auf dem
+iPhone. Das iPhone braucht iOS 17 oder neuer.
+
+### 16.1 Code holen
+
+Im Ordner `kalisthenik-tracker`:
+
+```
+git fetch
+```
+
+```
+git checkout factory/040-native-app-teil-2
+```
+
+```
+cd native
+```
+
+```
+npm run sync
+```
+
+```
+npx cap open ios
+```
+
+### 16.2 Widget-Target anlegen
+
+1. In Xcode oben im Menü **File → New → Target…** wählen.
+2. Oben **iOS** auswählen, im Suchfeld „Widget“ tippen, **Widget Extension**
+   anklicken → **Next**.
+3. **Product Name**: `RestWidget`
+4. **Team**: dasselbe wie in Schritt 6.
+5. Die Haken bei **Include Live Activity**, **Include Control** und **Include
+   Configuration App Intent** entfernen (je nach Xcode-Version gibt es nicht
+   alle drei).
+6. **Embed in Application**: `App`
+7. Auf **Finish** klicken.
+8. Xcode fragt „Activate “RestWidget” scheme?“ → auf **Cancel** klicken. So bleibt
+   oben das Schema **App** ausgewählt.
+
+### 16.3 Erzeugte Dateien löschen
+
+Xcode hat links im Navigator eine neue Gruppe **RestWidget** angelegt.
+
+1. Die Gruppe **RestWidget** aufklappen.
+2. Alle Dateien darin, die auf `.swift` enden (z. B. `RestWidget.swift`,
+   `RestWidgetBundle.swift`), markieren → Rechtsklick → **Delete** → **Move to
+   Trash**.
+3. `Info.plist` und `Assets` in der Gruppe **nicht** löschen.
+
+### 16.4 Unsere Dateien hinzufügen
+
+1. Links im Navigator Rechtsklick auf die Gruppe **App** (die mit
+   `AppDelegate.swift` darin) → **Add Files to “App”…**
+2. Im Dateifenster zum Ordner `kalisthenik-tracker/native/ios-src` gehen und alle
+   vier Dateien markieren (⌘A).
+3. Unten im Fenster: **Copy items if needed** muss **aus** sein (je nach
+   Xcode-Version heißt die Auswahl „Action“: dann **Reference files in place**
+   wählen). So holt ein späteres `git pull` Korrekturen automatisch.
+4. Auf **Add** klicken.
+5. Jetzt für jede der vier Dateien die Zugehörigkeit einstellen: Datei links
+   anklicken, rechts den File inspector öffnen (⌥⌘1), dort im Abschnitt **Target
+   Membership** die Haken genau so setzen:
+
+   | Datei | App | RestWidget |
+   | --- | --- | --- |
+   | `RestActivityAttributes.swift` | an | an |
+   | `RestActivityPlugin.swift` | an | aus |
+   | `MainViewController.swift` | an | aus |
+   | `RestActivityWidget.swift` | aus | an |
+
+   Fehlt ein Target in der Liste, dort auf `+` klicken und es hinzufügen.
+
+### 16.5 Plugin anmelden
+
+1. Links im Navigator `App` → `App` → `Base.lproj` → `Main.storyboard` anklicken
+   (Pfad: `App/App/Base.lproj/Main.storyboard`).
+2. In der Liste links neben der Zeichenfläche **Bridge View Controller**
+   anklicken.
+3. Rechts den Identity inspector öffnen (⌥⌘4).
+4. Unter **Custom Class** bei **Class** `MainViewController` eintragen und Enter
+   drücken.
+5. Bei **Module** `App` auswählen (oder den Haken **Inherit Module From Target**
+   setzen).
+
+### 16.6 Live Activities erlauben
+
+1. Links im Navigator `App` → `App` → `Info.plist` anklicken.
+2. Mit der Maus über eine Zeile fahren und auf das `+` klicken.
+3. Als Schlüssel `NSSupportsLiveActivities` eintippen (Xcode zeigt danach
+   „Supports Live Activities“), Typ **Boolean**, Wert **YES**.
+
+### 16.7 iOS-Version einstellen
+
+1. Links ganz oben das Projekt **App** anklicken → unter „Targets“ **App** →
+   Reiter **General** → **Minimum Deployments** → iOS auf `17.0` stellen.
+2. Unter „Targets“ **RestWidget** anklicken → **General** → **Minimum
+   Deployments** → ebenfalls `17.0`.
+
+### 16.8 Widget signieren
+
+1. Unter „Targets“ **RestWidget** → Reiter **Signing & Capabilities**.
+2. Haken bei **Automatically manage signing**, bei **Team** dasselbe Team wie in
+   Schritt 6.
+3. Der **Bundle Identifier** muss mit dem der App anfangen:
+   `de.bennji030.calisthenics.RestWidget`. Hast du in Schritt 6 `.benni`
+   angehängt, dann `de.bennji030.calisthenics.benni.RestWidget`.
+
+Eine **App Group** ist nicht nötig: alle Daten (Ende der Pause, Übung, Satz)
+reisen mit der Live Activity mit.
+
+### 16.9 Starten
+
+1. Oben in der Mitte von Xcode das Schema **App** (nicht RestWidget) und das
+   eigene iPhone auswählen.
+2. Auf ▶ klicken (oder ⌘R).
+3. Auf dem iPhone: Einstellungen → Apps → **Calisthenics** (unter iOS 17 direkt
+   Einstellungen → **Calisthenics**) → **Live-Aktivitäten** einschalten (meist
+   schon an).
+
+### 16.10 Testliste
+
+Ein Training starten, einen Satz abhaken und Punkt für Punkt prüfen:
+
+1. **iPhone sperren** → auf dem Sperrbildschirm steht der Countdown mit der
+   nächsten Übung und „Satz x/y“ des nächsten Satzes.
+2. **App nach oben wegwischen (Home)** → in der Dynamic Island läuft der
+   Countdown; lange drücken zeigt Übung und Satz.
+3. **Zählt ohne die App** → der Countdown läuft weiter, auch wenn das iPhone
+   gesperrt ist.
+4. **−15 / +15** in der App → der Countdown springt entsprechend.
+5. **✕**, „Training beenden“ und „Training verwerfen“ → die Live Activity
+   verschwindet.
+6. **Pause läuft ab, App ist offen** → etwa 4 Sekunden nach 0:00 verschwindet die
+   Live Activity.
+7. **Pause läuft ab, iPhone ist gesperrt** → statt des Countdowns steht „Pause
+   vorbei“ (das kann ein paar Sekunden dauern). Sie verschwindet, sobald in der
+   App die nächste Pause startet oder das Training endet.
+
+### 16.11 Typische Fehler bei der Live Activity
+
+| Symptom | Was tun |
+| --- | --- |
+| „'main' attribute can only apply to one type in a module“ oder „Invalid redeclaration“ | Die von Xcode erzeugten Swift-Dateien in der Gruppe RestWidget sind noch da. Löschen, siehe 16.3. |
+| „Cannot find 'RestActivityAttributes' in scope“ | `RestActivityAttributes.swift` gehört nicht zu beiden Targets. Haken setzen, siehe 16.4, Punkt 5. |
+| „Cannot find 'RestActivityPlugin' in scope“ oder „No such module 'Capacitor'“ | Falsche Zugehörigkeit: `RestActivityPlugin.swift` und `MainViewController.swift` nur bei App, nicht bei RestWidget (16.4, Punkt 5). |
+| „'Activity' is only available in iOS 16.1 or newer“ (oder ähnlich mit 16.2 / 17.0) | Minimum Deployments für App **und** RestWidget auf 17.0 stellen, siehe 16.7. |
+| „Embedded binary's bundle identifier is not prefixed with the parent app's bundle identifier“ | Bundle Identifier von RestWidget anpassen, siehe 16.8, Punkt 3. |
+| Die Live Activity erscheint nicht | Der Reihe nach prüfen: iPhone → Einstellungen → Apps → Calisthenics → „Live-Aktivitäten“ an; `NSSupportsLiveActivities` = YES in der `Info.plist` der App (16.6); Custom Class `MainViewController` im Storyboard (16.5); `npm run sync` ausgeführt (16.1). |
+| „Unknown class MainViewController in Interface Builder file“ (unten in der Xcode-Konsole), App startet, aber keine Live Activity | Im Storyboard bei **Module** `App` eintragen, siehe 16.5, Punkt 5. Außerdem prüfen, dass `MainViewController.swift` zum Target App gehört. |
+| App startet, aber das Widget wird nicht installiert / Xcode meldet, die iOS-Version des iPhones sei zu alt | Das iPhone hat ein älteres iOS als bei Minimum Deployments eingestellt. iPhone aktualisieren (mindestens iOS 17). |
+| Ein anderer Swift-Fehler in einer der vier Dateien | Erwartbar, die Dateien sind ungetestet. Fehlertext und Dateiname wie in Schritt 15 in den Chat kopieren. |
