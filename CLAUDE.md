@@ -91,7 +91,7 @@ src/health.ts        Apple Health sync, pure: config/status parsing, URL/token v
 src/health.test.ts   tests for it (plus manualFields/nextManual)
 src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memory throttle and running flag, force-next flag
 src/useHealthSync.ts hook: sync once when ready and on every return to the app; useSyncRunning()
-src/lockScreen.ts     pure: parseTrainingPrefs() (meta key `training`)
+src/lockScreen.ts     parseTrainingPrefs() (meta key `training`); the lock-screen helpers in it are unused since #75
 src/lockScreen.test.ts tests for it
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
