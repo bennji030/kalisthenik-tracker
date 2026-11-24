@@ -145,14 +145,10 @@ export function useTabSwipe(
       suppressClick = false;
     };
 
-    // Ein nicht-passiver touchmove schon vor dem Start hält Moves abbrechbar; sonst greift Chromes Verlaufs-Wischen.
-    const keepCancelable = () => {};
-    document.addEventListener('touchmove', keepCancelable, { passive: false });
     document.addEventListener('touchstart', onStart, { passive: true });
     document.addEventListener('click', onClick, true);
     return () => {
       document.removeEventListener('touchstart', onStart);
-      document.removeEventListener('touchmove', keepCancelable);
       unlisten();
       document.removeEventListener('click', onClick, true);
       reset();
