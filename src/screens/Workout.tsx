@@ -5,7 +5,7 @@ import { addedEntry, appendSlot, isAdded, planQuestions, slotFromEntry } from '.
 import { NumInput } from '../components/NumInput';
 import { RestTimer, beep, successSound, unlockAudio } from '../components/RestTimer';
 import { parseTrainingPrefs } from '../lockScreen';
-import { native, nextExercise } from '../native';
+import { native, nextExercise, nextSet } from '../native';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { backdatedLabel, flameGain, sessionStats, trainingNumber, type FinishStats } from '../finishSummary';
 import { strengthOnly } from '../cardio';
@@ -109,8 +109,15 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
     const r = endAt == null ? null : { endAt, total: total ?? rest?.total ?? 0 };
     setRest(r);
     saveRest(r);
-    if (endAt == null) void native.cancelRest();
-    else void native.scheduleRest(endAt, restExercise.current, prefs.restSound);
+    if (endAt == null) {
+      void native.cancelRest();
+      void native.endRest();
+    } else void native.scheduleRest(endAt, restExercise.current, prefs.restSound);
+  };
+
+  const changeRest = (endAt: number | null, total?: number) => {
+    setRestTimer(endAt, total);
+    if (endAt != null) void native.updateRest(endAt);
   };
 
   const toggleDone = (ei: number, si: number) => {
@@ -134,7 +141,10 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
         sets: en.sets.map((x, j) => ({ done: i === ei && j === si ? true : x.done })),
       }));
       restExercise.current = nextExercise(entries, ei);
-      setRestTimer(Date.now() + e.restSec * 1000, e.restSec);
+      const endAt = Date.now() + e.restSec * 1000;
+      setRestTimer(endAt, e.restSec);
+      const next = nextSet(entries, ei);
+      void native.startRest(endAt, next?.exercise ?? 'Pause', next?.set ?? '');
     }
   };
 
@@ -316,7 +326,7 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
       </div>
       </>)}
 
-      {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={setRestTimer} onEnd={() => { if (prefs.restSound) beep(); }} />}
+      {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={changeRest} onEnd={() => { if (prefs.restSound) beep(); }} />}
     </div>
   );
 }
