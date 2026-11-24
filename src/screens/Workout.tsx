@@ -3,9 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, getMeta, type EntryLog, type Exercise, type ExType, type Session, type SetLog } from '../db';
 import { addedEntry, appendSlot, isAdded, planQuestions, slotFromEntry } from '../addedExercise';
 import { NumInput } from '../components/NumInput';
-import { RestTimer, unlockAudio } from '../components/RestTimer';
+import { RestTimer, successSound, unlockAudio } from '../components/RestTimer';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
-import { entrySucceeded } from '../progression';
+import { backdatedLabel, flameGain, sessionStats, trainingNumber, type FinishStats } from '../finishSummary';
+import { strengthOnly } from '../cardio';
 import { REPS_STEP, SEC_STEP, stepValue, weightStep } from '../stepper';
 import { ENTRY_DAY_KEY, type EntryDay } from '../sessions';
 import { fmtAddedKg, fmtDate, fmtKg, uid } from '../util';
@@ -31,13 +32,26 @@ function saveRest(r: { endAt: number; total: number } | null) {
   } catch { /* egal */ }
 }
 
-export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (msg?: string) => void }) {
+interface Summary {
+  name: string;
+  number: number;
+  backdated: string | null;
+  stats: FinishStats;
+  flames: number;
+  gain: number;
+}
+
+export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onClose: (msg?: string) => void; onDone: () => void }) {
   const [session, setSession] = useState<Session | null>(null);
   const [rest, setRest] = useState(loadRest);
   const [confirm, setConfirm] = useState<null | 'finish' | 'discard'>(null);
   const [adding, setAdding] = useState(false);
   // Nach dem Speichern: Fragen zu hinzugefügten Übungen, eine nach der anderen.
-  const [questions, setQuestions] = useState<{ list: EntryLog[]; i: number; msg: string } | null>(null);
+  const [questions, setQuestions] = useState<{ list: EntryLog[]; i: number } | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const busy = useRef(false);
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
   const template = useLiveQuery(async () => (session ? db.templates.get(session.templateId) : undefined), [session?.templateId]);
@@ -55,6 +69,9 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
     if (first.current) { first.current = false; return; }
     void db.sessions.put(session);
   }, [session]);
+
+  const success = summary != null && !questions;
+  useEffect(() => { if (success) successSound(); }, [success]);
 
   // Bildschirm während des Trainings anlassen.
   useEffect(() => {
@@ -130,37 +147,64 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const mins = Math.round((Date.now() - session.startedAt) / 60000);
 
   const finish = async () => {
-    const now = Date.now();
-    let s: Session = { ...session, finishedAt: now };
-    await db.transaction('rw', db.sessions, db.meta, async () => {
-      const e = await getMeta<EntryDay | null>(ENTRY_DAY_KEY, null);
-      if (e?.sessionId === session.id) {
-        const day = entryDayFor(e, session.id);
-        if (day) s = { ...session, ...entryTimes(day, session.startedAt, now) };
-        await db.meta.delete(ENTRY_DAY_KEY);
-      }
-      await db.sessions.put(s);
-    });
-    setRestTimer(null);
-    const hits = s.entries.filter((e) => e.kind !== 'free' && entrySucceeded(e)).length;
-    const judged = s.entries.filter((e) => e.kind !== 'free').length;
-    const msg = `Gespeichert · ${hits}/${judged} Ziele geschafft 💪`;
-    const list = planQuestions(s, template);
-    if (list.length) setQuestions({ list, i: 0, msg });
-    else onClose(msg);
+    if (busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      const now = Date.now();
+      let s: Session = { ...session, finishedAt: now };
+      let backdated = false;
+      await db.transaction('rw', db.sessions, db.meta, async () => {
+        const e = await getMeta<EntryDay | null>(ENTRY_DAY_KEY, null);
+        if (e?.sessionId === session.id) {
+          const day = entryDayFor(e, session.id);
+          if (day) { s = { ...session, ...entryTimes(day, session.startedAt, now) }; backdated = true; }
+          await db.meta.delete(ENTRY_DAY_KEY);
+        }
+        await db.sessions.put(s);
+      });
+      setRestTimer(null);
+      const [all, templates] = await Promise.all([db.sessions.toArray(), db.templates.toArray()]);
+      const f = flameGain(all, s.id, strengthOnly(templates).length, now);
+      setSummary({
+        name: s.templateName,
+        number: trainingNumber(all),
+        backdated: backdated ? backdatedLabel(s.startedAt) : null,
+        stats: sessionStats(s),
+        flames: f.after,
+        gain: f.gain,
+      });
+      const list = planQuestions(s, template);
+      if (list.length) setQuestions({ list, i: 0 });
+    } catch {
+      setError('Speichern fehlgeschlagen, bitte nochmal.');
+    } finally {
+      busy.current = false;
+      setSaving(false);
+    }
   };
   const answer = async (yes: boolean) => {
-    if (!questions) return;
-    const e = questions.list[questions.i];
-    const ex = exMap.get(e.exerciseId);
-    if (yes && ex) {
-      await db.transaction('rw', db.templates, async () => {
-        const t = await db.templates.get(session.templateId);
-        if (t) await db.templates.put(appendSlot(t, slotFromEntry(e, ex.type)));
-      });
+    if (!questions || busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      const e = questions.list[questions.i];
+      const ex = exMap.get(e.exerciseId);
+      if (yes && ex) {
+        await db.transaction('rw', db.templates, async () => {
+          const t = await db.templates.get(session.templateId);
+          if (t) await db.templates.put(appendSlot(t, slotFromEntry(e, ex.type)));
+        });
+      }
+      setQuestions(questions.i + 1 < questions.list.length ? { ...questions, i: questions.i + 1 } : null);
+    } catch {
+      setError('Speichern fehlgeschlagen, bitte nochmal.');
+    } finally {
+      busy.current = false;
+      setSaving(false);
     }
-    if (questions.i + 1 < questions.list.length) setQuestions({ ...questions, i: questions.i + 1 });
-    else onClose(questions.msg);
   };
   const discard = async () => {
     await db.transaction('rw', db.sessions, db.meta, async () => {
@@ -171,6 +215,8 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
     setRestTimer(null);
     onClose('Training verworfen');
   };
+
+  if (success) return <FinishCard s={summary} onDone={onDone} />;
 
   return (
     <div className="screen workout">
@@ -188,9 +234,10 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
           <h2>{exMap.get(questions.list[questions.i].exerciseId)?.name} künftig auch in {template?.name ?? session.templateName}?</h2>
           <p className="muted small">Kommt ans Ende des Trainingstags, Werte änderst du im Plan.</p>
           <div className="row">
-            <button className="btn btn-primary wo-answer" onClick={() => answer(true)}>Ja</button>
-            <button className="btn wo-answer" onClick={() => answer(false)}>Nein</button>
+            <button className="btn btn-primary wo-answer" disabled={saving} onClick={() => answer(true)}>Ja</button>
+            <button className="btn wo-answer" disabled={saving} onClick={() => answer(false)}>Nein</button>
           </div>
+          {error && <p className="wo-error small" role="alert">{error}</p>}
         </section>
       ) : (<>
       <div className="cards">
@@ -229,9 +276,10 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
           <div className="confirm">
             <p>{doneSets < totalSets ? `${totalSets - doneSets} Sätze nicht abgehakt – die zählen als nicht geschafft.` : 'Alles abgehakt. Speichern?'}</p>
             <div className="row">
-              <button className="btn btn-primary" onClick={finish}>Speichern</button>
-              <button className="btn" onClick={() => setConfirm(null)}>Abbrechen</button>
+              <button className="btn btn-primary" disabled={saving} onClick={() => { unlockAudio(); void finish(); }}>Speichern</button>
+              <button className="btn" disabled={saving} onClick={() => { setError(null); setConfirm(null); }}>Abbrechen</button>
             </div>
+            {error && <p className="wo-error small" role="alert">{error}</p>}
           </div>
         )}
         {confirm === 'discard' && (
@@ -247,6 +295,33 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
       </>)}
 
       {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={setRestTimer} />}
+    </div>
+  );
+}
+
+function FinishCard({ s, onDone }: { s: Summary; onDone: () => void }) {
+  const { stats } = s;
+  return (
+    <div className="screen workout">
+      <section className="card finish-card">
+        <h1>{s.backdated ? `Training Nr. ${s.number} für ${s.backdated} eingetragen` : `Training Nr. ${s.number} erfolgreich absolviert`}</h1>
+        <p className="finish-name">{s.name}</p>
+        <ul className="finish-stats">
+          <li><b>{stats.minutes.toLocaleString('de-DE')}</b> min</li>
+          <li><b>{stats.sets.toLocaleString('de-DE')}</b> {stats.sets === 1 ? 'Satz' : 'Sätze'}</li>
+          <li><b>{stats.reps.toLocaleString('de-DE')}</b> {stats.reps === 1 ? 'Wiederholung' : 'Wiederholungen'}</li>
+          {stats.judged > 0 && <li><b>{stats.hits}/{stats.judged}</b> Ziele geschafft</li>}
+        </ul>
+        <div className="streak finish-flames" role="img"
+          aria-label={`${s.flames} Training${s.flames === 1 ? '' : 's'} in Folge${s.gain > 0 ? `, ${s.gain} mehr` : ''}`}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+            <path d="M19.48 12.35c-1.57-4.08-7.16-4.3-5.81-10.23.1-.44-.37-.78-.75-.55C9.29 3.71 6.68 8 8.87 13.62c.18.46-.36.89-.75.59-1.81-1.37-2-3.34-1.84-4.75.06-.52-.62-.77-.91-.34C4.69 10.16 4 11.84 4 14.37c.38 5.6 5.11 7.32 6.81 7.54 2.43.31 5.06-.14 6.95-1.87 2.08-1.93 2.84-5.01 1.72-7.69z" />
+          </svg>
+          <span>{s.flames}</span>
+          {s.gain > 0 && <span className="finish-gain">+{s.gain}</span>}
+        </div>
+        <button className="btn btn-primary btn-big" onClick={onDone}>Fertig</button>
+      </section>
     </div>
   );
 }

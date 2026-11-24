@@ -28,6 +28,25 @@ function beep() {
   });
 }
 
+/** Kurzer aufsteigender Dreiklang beim Erfolgs-Bildschirm. */
+export function successSound() {
+  if (!audioCtx) return;
+  const ctx = audioCtx;
+  const t = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach((f, i) => {
+    const d = i * 0.12;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t + d);
+    g.gain.exponentialRampToValueAtTime(0.3, t + d + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + (i === 2 ? 0.5 : 0.2));
+    o.connect(g).connect(ctx.destination);
+    o.start(t + d);
+    o.stop(t + d + (i === 2 ? 0.55 : 0.25));
+  });
+}
+
 interface Props {
   endAt: number;
   total: number;
