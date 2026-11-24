@@ -4,6 +4,7 @@ import { getMeta } from './db';
 import { applyTheme, parseThemePref, resolveTheme } from './theme';
 import { seedIfEmpty } from './seed';
 import { ensureCardioDayInDb } from './cardio';
+import { ensureMuscleDefaultsInDb } from './muscles';
 import { activeSession } from './sessions';
 import { adjacentTab } from './tabSwipe';
 import { useTabSwipe } from './useTabSwipe';
@@ -44,6 +45,7 @@ export function App() {
     void (async () => {
       await seedIfEmpty();
       await ensureCardioDayInDb();
+      await ensureMuscleDefaultsInDb();
       // Dauerhaften Speicher anfragen (iOS: vor allem relevant als Home-Bildschirm-App).
       try { await navigator.storage?.persist?.(); } catch { /* egal */ }
       const a = await activeSession();

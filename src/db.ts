@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import { roundKg } from './weight';
 import { mergeDay, nextManual, type DayField, type DayPatch } from './dayValues';
+import type { Muscle } from './muscles';
 
 /** weighted = Wdh. + Zusatzgewicht, reps = nur Wdh., hold = Haltezeit in Sekunden */
 export type ExType = 'weighted' | 'reps' | 'hold';
@@ -9,6 +10,7 @@ export interface Exercise {
   id: string;
   name: string;
   type: ExType;
+  muscles?: Muscle[]; // Muskelgruppen für die Körper-Grafik auf Home
 }
 
 /** Eine Übung innerhalb eines Trainingstags, mit eigenen Zielen. */
