@@ -3,6 +3,8 @@ import {
   isConfigured, mergeHealth, nextStatus, parseHealthConfig, parseHealthStatus, runHealthSync, shouldSync,
   type RemoteDay, type SyncResult,
 } from './health';
+import { runNativeHealthSync } from './healthKit';
+import { native } from './native';
 
 // Nur im Speicher: ein frischer App-Start holt immer.
 let lastAttempt: number | null = null;
@@ -44,17 +46,21 @@ async function saveHealthDays(days: RemoteDay[]) {
   });
 }
 
-/** Ein Abgleich mit dem Server; null = gedrosselt oder läuft schon. Wirft nie. */
+/** Ein Abgleich mit dem Server, in der nativen App direkt mit HealthKit; null = gedrosselt oder läuft schon. Wirft nie. */
 export async function syncHealth(force: boolean): Promise<SyncResult | null> {
   if (running) return null;
   setRunning(true);
   try {
     const config = parseHealthConfig(await getMeta<unknown>('health', undefined));
-    if (!isConfigured(config)) return { kind: 'skipped' };
+    // Die native App nutzt nie den Server, nur HealthKit, und das erst nach „Zugriff erlauben“.
+    const viaKit = native.isNative();
+    if (viaKit ? !(native.healthAvailable() && config.healthKit === true) : !isConfigured(config)) return { kind: 'skipped' };
     const now = Date.now();
     if (!shouldSync(lastAttempt, now, force)) return null;
     lastAttempt = now;
-    const result = await runHealthSync(config, now, (input, init) => fetch(input, init), saveHealthDays);
+    const result = viaKit
+      ? await runNativeHealthSync(native.readHealthDays, now, saveHealthDays)
+      : await runHealthSync(config, now, (input, init) => fetch(input, init), saveHealthDays);
     await db.transaction('rw', db.meta, async () => {
       const prev = parseHealthStatus(await getMeta<unknown>('healthStatus', undefined));
       await setMeta('healthStatus', nextStatus(prev, result, Date.now()));
