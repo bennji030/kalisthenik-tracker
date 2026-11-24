@@ -4,8 +4,9 @@ import { db, type Exercise, type ExType, type Slot, type Template } from '../db'
 import { NumInput } from '../components/NumInput';
 import { uid, WEEKDAYS } from '../util';
 import { isCardio } from '../cardio';
+import { DEFAULT_SLOT } from '../addedExercise';
 
-const TYPE_LABEL: Record<ExType, string> = { weighted: 'Wdh. + Gewicht', reps: 'Wdh.', hold: 'Haltezeit' };
+export const TYPE_LABEL: Record<ExType, string> = { weighted: 'Wdh. + Gewicht', reps: 'Wdh.', hold: 'Haltezeit' };
 
 export function PlanScreen() {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
@@ -88,7 +89,7 @@ function TemplateEditor({ initial, exercises, onClose }: { initial: Template; ex
     if (!exercises.length) return;
     setT({
       ...t,
-      slots: [...t.slots, { id: uid(), exerciseId: sorted[0].id, sets: 3, repMin: 6, repMax: 10, increment: 2.5, startWeight: 0, restSec: 120, progression: true }],
+      slots: [...t.slots, { id: uid(), exerciseId: sorted[0].id, ...DEFAULT_SLOT }],
     });
   };
   const save = async () => {
