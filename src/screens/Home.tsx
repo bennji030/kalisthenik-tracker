@@ -12,6 +12,7 @@ import { WeighPrompt } from '../components/Weight';
 import { Habits } from '../components/Habits';
 import { CardioCheck } from '../components/CardioCheck';
 import type { HabitKind } from './HabitMonths';
+import type { DayView } from './DayValues';
 
 function TodayCard({ templates, sessions, openWorkout }: {
   templates: Template[];
@@ -81,10 +82,11 @@ function TodayCard({ templates, sessions, openWorkout }: {
   );
 }
 
-export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }: {
+export function Home({ goTraining, goSettings, goHabit, goDay, openWorkout, goWeight }: {
   goTraining: () => void;
   goSettings: () => void;
   goHabit: (kind: HabitKind) => void;
+  goDay: (view: DayView) => void;
   openWorkout: (id: string) => void;
   goWeight: () => void;
 }) {
@@ -142,7 +144,7 @@ export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }:
         </button>
       )}
 
-      <Habits templateCount={strengthTemplates} goHabit={goHabit} goWeight={goWeight} />
+      <Habits templateCount={strengthTemplates} goHabit={goHabit} goWeight={goWeight} goDay={goDay} goSettings={goSettings} />
     </div>
   );
 }

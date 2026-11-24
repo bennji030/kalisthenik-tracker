@@ -1,9 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db';
+import { db, getMeta, type DayValues } from '../db';
 import { dotGrid, lastDayKeys, sessionDayKeys, weekDayCount, weekSessionCount } from '../habits';
 import { WeightCard } from './Weight';
 import { cardioOnly, strengthOnly } from '../cardio';
+import { goalProgress, parseGoals, stepsWeek, type Goals } from '../dayValues';
+import { fmtInt } from '../util';
+import { dayKey } from '../weight';
 import type { HabitKind } from '../screens/HabitMonths';
+import type { DayView } from '../screens/DayValues';
 
 function HabitCard({ title, dots, count, target, tab, onOpen }: {
   title: string;
@@ -34,10 +38,107 @@ function HabitCard({ title, dots, count, target, tab, onOpen }: {
   );
 }
 
-export function Habits({ templateCount, goHabit, goWeight }: { templateCount: number; goHabit: (kind: HabitKind) => void; goWeight: () => void }) {
+/** Liegt über dem habit-hit (z-index), ein Tipp öffnet nur die Einstellungen. */
+function SetupButton({ goSettings }: { goSettings: () => void }) {
+  return <button className="btn btn-small habit-setup" onClick={goSettings}>Einrichten</button>;
+}
+
+function StepsCard({ days, goals, now, onOpen, goSettings }: {
+  days: DayValues[];
+  goals: Goals;
+  now: number;
+  onOpen: () => void;
+  goSettings: () => void;
+}) {
+  const week = stepsWeek(days, now);
+  const steps = week[week.length - 1].steps;
+  return (
+    <section className="habit">
+      <div className="habit-title">Schritte heute</div>
+      {steps != null ? (
+        <div className="habit-count">
+          <span className="habit-num">{fmtInt(steps)}</span> <span className="muted small">/ {fmtInt(goals.steps)}</span>
+        </div>
+      ) : (
+        <>
+          <p className="muted small">Noch keine Schritte</p>
+          <SetupButton goSettings={goSettings} />
+        </>
+      )}
+      <div className="step-bars" aria-hidden="true">
+        {week.map((d) => {
+          const p = goalProgress(d.steps, goals.steps);
+          const cls = d.steps == null ? 'step-bar step-bar-none' : p >= 1 ? 'step-bar step-bar-ok' : 'step-bar';
+          return <span key={d.date} className={cls} style={d.steps == null ? undefined : { height: `${Math.max(p * 100, 4)}%` }} />;
+        })}
+      </div>
+      <div className="muted small">Letzte 7 Tage</div>
+      <button
+        className="habit-hit"
+        onClick={onOpen}
+        aria-label={steps != null ? `Schritte heute: ${fmtInt(steps)} von ${fmtInt(goals.steps)}, Verlauf öffnen` : 'Schritte heute: noch keine, Verlauf öffnen'}
+      />
+    </section>
+  );
+}
+
+function KcalCard({ today, goals, onOpen, goSettings }: {
+  today: DayValues | undefined;
+  goals: Goals;
+  onOpen: () => void;
+  goSettings: () => void;
+}) {
+  const kcal = today?.kcal ?? null;
+  const protein = today?.proteinG ?? null;
+  const empty = kcal == null && protein == null;
+  const R = 22, C = 2 * Math.PI * R;
+  const fill = goalProgress(kcal, goals.kcal);
+  const show = (n: number | null) => (n == null ? '–' : fmtInt(n));
+  return (
+    <section className="habit">
+      <div className="habit-title">Kalorien heute</div>
+      {empty ? (
+        <>
+          <p className="muted small">Noch keine Kalorien</p>
+          <SetupButton goSettings={goSettings} />
+        </>
+      ) : (
+        <>
+          <div className="kcal-row">
+            <svg className="kcal-ring" viewBox="0 0 56 56" aria-hidden="true">
+              <circle cx="28" cy="28" r={R} className="kcal-track" />
+              {fill > 0 && <circle cx="28" cy="28" r={R} className="kcal-fill" strokeDasharray={`${fill * C} ${C}`} transform="rotate(-90 28 28)" />}
+            </svg>
+            <div className="kcal-text">
+              <span className="habit-num">{show(kcal)}</span> <span className="muted small">/ {fmtInt(goals.kcal)} kcal</span>
+            </div>
+          </div>
+          <div className="small">Protein <b className="habit-val">{show(protein)}</b> <span className="muted">/ {fmtInt(goals.proteinG)} g</span></div>
+        </>
+      )}
+      <button
+        className="habit-hit"
+        onClick={onOpen}
+        aria-label={empty
+          ? 'Kalorien heute: noch keine, Verlauf öffnen'
+          : `Kalorien heute: ${show(kcal)} von ${fmtInt(goals.kcal)} kcal, Protein ${show(protein)} von ${fmtInt(goals.proteinG)} g, Verlauf öffnen`}
+      />
+    </section>
+  );
+}
+
+export function Habits({ templateCount, goHabit, goWeight, goDay, goSettings }: {
+  templateCount: number;
+  goHabit: (kind: HabitKind) => void;
+  goWeight: () => void;
+  goDay: (view: DayView) => void;
+  goSettings: () => void;
+}) {
   const weights = useLiveQuery(() => db.weights.toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
-  if (!weights || !sessions) return null;
+  const days = useLiveQuery(() => db.days.toArray(), []);
+  const goals = useLiveQuery(async () => parseGoals(await getMeta<unknown>('goals', undefined)), []);
+  if (!weights || !sessions || !days || !goals) return null;
   const now = Date.now();
   const weighed = new Set(weights.map((w) => w.date));
   // Cardio zählt nicht fürs Wochenziel; reine Cardio-Tage bekommen eigene Punkte.
@@ -57,6 +158,8 @@ export function Habits({ templateCount, goHabit, goWeight }: { templateCount: nu
           title="Trainings" tab="sessions" onOpen={goHabit}
           dots={trainDots} count={weekSessionCount(strength, now)} target={templateCount}
         />
+        <StepsCard days={days} goals={goals} now={now} onOpen={() => goDay('steps')} goSettings={goSettings} />
+        <KcalCard today={days.find((d) => d.date === dayKey(now))} goals={goals} onOpen={() => goDay('kcal')} goSettings={goSettings} />
         <WeightCard entries={weights} onOpen={goWeight} />
       </div>
     </section>
