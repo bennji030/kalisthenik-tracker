@@ -32,8 +32,13 @@ export function fmtShortDate(ts: number): string {
 
 /** Zusatzgewicht: "+25 kg", "+1,25 kg"; leer bei 0/null */
 export function fmtAddedKg(kg: number | null | undefined): string {
+  return kg ? `${fmtSignedKg(kg)} kg` : '';
+}
+
+/** Zusatzgewicht ohne Einheit: "+25", "+1,25", "-5"; leer bei 0/null */
+export function fmtSignedKg(kg: number | null | undefined): string {
   if (!kg) return '';
-  return `${kg > 0 ? '+' : ''}${fmtKg(kg)} kg`;
+  return `${kg > 0 ? '+' : ''}${fmtKg(kg)}`;
 }
 
 /** z. B. "4×4 +25 kg", "5, 4, 4, 4 +25 kg", "5 +25, 4 +27,5 kg", "3×10", "20, 18 s" */
@@ -50,7 +55,7 @@ export function summarizeSets(sets: Pick<SetLog, 'reps' | 'weight' | 'sec'>[], t
   if (type === 'reps') return repStr;
   const weights = sets.map((s) => s.weight ?? 0);
   if (allSame(weights)) return weights[0] ? `${repStr} ${fmtAddedKg(weights[0])}` : repStr;
-  const parts = sets.map((s) => (s.weight ? `${s.reps ?? 0} ${fmtAddedKg(s.weight).slice(0, -3)}` : `${s.reps ?? 0}`));
+  const parts = sets.map((s) => (s.weight ? `${s.reps ?? 0} ${fmtSignedKg(s.weight)}` : `${s.reps ?? 0}`));
   return parts.join(', ') + ' kg';
 }
 

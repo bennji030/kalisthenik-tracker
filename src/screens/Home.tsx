@@ -134,7 +134,7 @@ export function Home({ goTraining, goSettings, goHabit, openWorkout, goWeight }:
 
       <TodayCard templates={templates} sessions={sessions} openWorkout={openWorkout} />
 
-      <WeighPrompt />
+      <WeighPrompt accent={!sessions.some((s) => s.finishedAt == null)} />
 
       {backupDue && (
         <button className="banner" onClick={goSettings}>

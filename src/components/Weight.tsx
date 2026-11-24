@@ -27,7 +27,7 @@ export function WeightStats({ entries }: { entries: WeightEntry[] }) {
 }
 
 /** Tägliche Gewichtsabfrage auf Home, bis heute gewogen oder übersprungen wurde. */
-export function WeighPrompt() {
+export function WeighPrompt({ accent }: { accent: boolean }) {
   const weights = useLiveQuery(() => db.weights.toArray(), []);
   const skip = useLiveQuery(async () => ({ day: await getMeta<string | null>('weighSkip', null) }), []);
   const [kg, setKg] = useState<number | null>(null);
@@ -35,7 +35,7 @@ export function WeighPrompt() {
   if (!weights || !skip || !weighPromptDue(weights, skip.day, Date.now())) return null;
 
   return (
-    <section className="card card-accent">
+    <section className={accent ? 'card card-accent' : 'card'}>
       <h2>Heute schon gewogen?</h2>
       <div className="weight-form">
         <NumInput value={kg} onChange={setKg} decimal placeholder="kg" ariaLabel="Gewicht in kg" />

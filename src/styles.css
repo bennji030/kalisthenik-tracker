@@ -19,6 +19,8 @@
   --cardio: #4fb3ff;
   --cardio-soft: rgba(79, 179, 255, 0.14);
   --on-cardio: #04223a;
+  --on-accent-soft: #ff7a3d;
+  --on-cardio-soft: #4fb3ff;
   --raised: #262a32;
   --bar-bg: rgba(14, 15, 18, 0.92);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -34,7 +36,7 @@
   --card: #ffffff;
   --card-2: #ececf1;
   --line: #d8dae0;
-  --tile-off: #c6c9d1;
+  --tile-off: #aeb2bb;
   --text: #1c1c1e;
   --muted: #5c626d;
   --accent: #c4470f;
@@ -50,6 +52,8 @@
   --cardio: #0b6bb8;
   --cardio-soft: rgba(11, 107, 184, 0.12);
   --on-cardio: #ffffff;
+  --on-accent-soft: #a83b0b;
+  --on-cardio-soft: #0a60a6;
   --raised: #ffffff;
   --bar-bg: rgba(242, 242, 247, 0.92);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.18);
@@ -240,6 +244,8 @@ p { margin: 0; }
 
 /* Settings */
 .settings-form { display: flex; flex-direction: column; gap: 12px; }
+.settings-form .num { text-align: right; font-variant-numeric: tabular-nums; }
+.settings-form input::-webkit-date-and-time-value { text-align: left; }
 .hint-warn { color: var(--warn); }
 .settings-val { color: var(--text); font-variant-numeric: tabular-nums; }
 
@@ -274,6 +280,7 @@ select { width: 100%; appearance: none; }
   display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; padding: 4px;
 }
 .tabbar button.on { color: var(--accent); }
+.tabbar button.sub { color: var(--text); }
 .tab-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 2px; }
 
 .toast {
@@ -334,7 +341,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cal-head span { text-align: center; font-size: 12px; color: var(--muted); padding: 2px 0; }
 .cal-body { overflow: hidden; padding: 4px; margin: -4px; } /* Rand für den Fokusring der Randtage */
 .cal-handle { height: 44px; margin-top: -4px; display: grid; place-items: center; }
-.cal-handle::before { content: ''; width: 36px; height: 5px; border-radius: 3px; background: var(--line); }
+.cal-handle::before { content: ''; width: 36px; height: 5px; border-radius: 3px; background: var(--muted); }
 .cal-rows { position: relative; }
 .cal-month, .cal-week { animation: cal-in 0.2s ease-out; }
 .cal-body[data-drag] .cal-month, .cal-body[data-drag] .cal-week { animation: none; }
@@ -352,9 +359,9 @@ main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
   background: none; color: var(--text); font-variant-numeric: tabular-nums;
 }
 .day-done { background: var(--accent); color: var(--on-accent); }
-.day-open { background: var(--accent-soft); color: var(--accent); }
+.day-open { background: var(--accent-soft); color: var(--on-accent-soft); }
 .day-cardio { background: var(--cardio); color: var(--on-cardio); }
-.day-cardio-open { background: var(--cardio-soft); color: var(--cardio); }
+.day-cardio-open { background: var(--cardio-soft); color: var(--on-cardio-soft); }
 .day-missed { color: var(--muted); }
 .day-today { font-weight: 800; box-shadow: inset 0 0 0 2px var(--text); }
 .day-sel { border-color: var(--accent); border-style: dashed; }
@@ -401,4 +408,5 @@ main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
   .wo-actions { max-width: 560px; }
   .chart { max-width: 680px; }
   .readable { max-width: 720px; }
+  .cards-habits { align-items: stretch; }
 }

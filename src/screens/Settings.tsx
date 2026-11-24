@@ -17,7 +17,7 @@ export function Settings({ toast, onBack, goHistory }: {
   const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('profile', undefined) }), []);
   return (
     <div className="screen">
-      <header className="wo-head">
+      <header className="wo-head readable">
         <h1>Einstellungen</h1>
         <button className="btn btn-ghost" onClick={onBack}>Zurück</button>
       </header>
@@ -131,7 +131,7 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
   );
 }
 
-const THEMES: [ThemePref, string][] = [['dark', 'Dunkel'], ['light', 'Hell'], ['system', 'Wie System']];
+const THEMES: [ThemePref, string][] = [['dark', 'Dunkel'], ['light', 'Hell'], ['system', 'System']];
 
 function ThemeCard() {
   const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('theme', undefined) }), []);

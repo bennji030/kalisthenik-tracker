@@ -1,4 +1,6 @@
 import type { Template } from './db';
+import type { EntryDay } from './sessions';
+import { isDayKey } from './profile';
 import { dayTs } from './weight';
 
 /** 12:00 Uhr (lokal) des Tages YYYY-MM-DD; Mittag ist sicher gegen Zeitumstellungen. */
@@ -21,4 +23,9 @@ export function defaultTemplate<T extends Pick<Template, 'id' | 'weekdays'>>(tem
 export function entryTimes(day: string, realStart: number, now: number): { startedAt: number; finishedAt: number } {
   const startedAt = entryNoon(day);
   return { startedAt, finishedAt: startedAt + Math.max(0, now - realStart) };
+}
+
+/** Der gewählte Tag, nur wenn der Eintrag zu dieser Session gehört und ein echtes Datum ist. */
+export function entryDayFor(entry: EntryDay | null | undefined, sessionId: string): string | null {
+  return entry && entry.sessionId === sessionId && isDayKey(entry.day) ? entry.day : null;
 }
