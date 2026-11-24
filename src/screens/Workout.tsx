@@ -4,8 +4,7 @@ import { db, getMeta, type EntryLog, type Exercise, type ExType, type Session, t
 import { addedEntry, appendSlot, isAdded, planQuestions, slotFromEntry } from '../addedExercise';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, beep, successSound, unlockAudio } from '../components/RestTimer';
-import { nowPlaying, parseTrainingPrefs } from '../lockScreen';
-import { lockScreenSupported, restEndBeep, startNowPlaying, stopNowPlaying, updateNowPlaying } from '../nowPlaying';
+import { parseTrainingPrefs } from '../lockScreen';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { backdatedLabel, flameGain, sessionStats, trainingNumber, type FinishStats } from '../finishSummary';
 import { strengthOnly } from '../cardio';
@@ -62,7 +61,6 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
   const first = useRef(true);
   const prefsRaw = useLiveQuery(async () => ({ value: await getMeta<unknown>('training', undefined) }), []);
   const prefs = parseTrainingPrefs(prefsRaw?.value);
-  const lockOn = prefs.lockScreen && lockScreenSupported();
 
   useEffect(() => {
     void db.sessions.get(sessionId).then((s) => setSession(s ?? null));
@@ -77,30 +75,6 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
 
   const success = summary != null && !questions;
   useEffect(() => { if (success && prefs.restSound) successSound(); }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Sperrbildschirm-Anzeige: Stopp beim Ausschalten und beim Verlassen des Trainings.
-  useEffect(() => {
-    if (!lockOn) return;
-    return () => stopNowPlaying();
-  }, [lockOn]);
-
-  // Anzeige aktualisieren: jede Sekunde während der Pause, sonst bei jeder Änderung.
-  useEffect(() => {
-    if (!lockOn || !session || !exercises) return;
-    const names = new Map(exercises.map((e) => [e.id, e.name]));
-    const update = () => {
-      const np = nowPlaying({
-        endAt: rest?.endAt ?? null,
-        now: Date.now(),
-        entries: session.entries.map((e) => ({ name: names.get(e.exerciseId), sets: e.sets })),
-      });
-      updateNowPlaying(np.title, session.templateName);
-    };
-    update();
-    if (!rest) return;
-    const t = setInterval(update, 1000);
-    return () => clearInterval(t);
-  }, [lockOn, session, exercises, rest]);
 
   // Bildschirm während des Trainings anlassen.
   useEffect(() => {
@@ -130,7 +104,6 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
 
   const toggleDone = (ei: number, si: number) => {
     unlockAudio();
-    if (lockOn) startNowPlaying({ skipRest: () => setRestTimer(null) });
     const e = session.entries[ei];
     const st = e.sets[si];
     const done = !st.done;
@@ -195,7 +168,6 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
         await db.sessions.put(s);
       });
       setRestTimer(null);
-      stopNowPlaying();
       const [all, templates] = await Promise.all([db.sessions.toArray(), db.templates.toArray()]);
       const f = flameGain(all, s.id, strengthOnly(templates).length, now);
       setSummary({
@@ -244,7 +216,6 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
       await db.sessions.delete(session.id);
     });
     setRestTimer(null);
-    stopNowPlaying();
     onClose('Training verworfen');
   };
 
@@ -326,7 +297,7 @@ export function Workout({ sessionId, onClose, onDone }: { sessionId: string; onC
       </div>
       </>)}
 
-      {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={setRestTimer} onEnd={() => { if (prefs.restSound && !(lockOn && restEndBeep())) beep(); }} />}
+      {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={setRestTimer} onEnd={() => { if (prefs.restSound) beep(); }} />}
     </div>
   );
 }
