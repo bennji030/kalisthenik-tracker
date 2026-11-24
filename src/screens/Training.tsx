@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Exercise, type Session, type Template } from '../db';
 import { dayStatus, plannedWeekdays, weekKeys } from '../calendar';
@@ -11,6 +11,8 @@ import { SessionLog } from '../components/SessionLog';
 import { CardioCheck } from '../components/CardioCheck';
 import { fmtDate, fmtAddedKg, fmtLongDate, fmtMonth, WEEKDAYS } from '../util';
 import { dayKey, dayTs } from '../weight';
+import { shiftWeek } from '../calendarGesture';
+import { useCalendarGesture } from '../useCalendarGesture';
 
 export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
@@ -22,7 +24,32 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
   const [entering, setEntering] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState({ y: 0, m: 0 });
+  const [peek, setPeek] = useState(false);
   const [busy, setBusy] = useState(false);
+  const calRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const pick = (k: string) => { setSelectedDay(k); setSelected(null); setEntering(false); };
+  const showMonthOf = (k: string) => {
+    const d = new Date(dayTs(k));
+    setView({ y: d.getFullYear(), m: d.getMonth() });
+  };
+  const toggle = () => {
+    if (!expanded) showMonthOf(selectedDay);
+    setExpanded(!expanded);
+  };
+  const shift = (n: number) => {
+    const d = new Date(view.y, view.m + n, 1);
+    setView({ y: d.getFullYear(), m: d.getMonth() });
+  };
+
+  useCalendarGesture(calRef, bodyRef, {
+    expanded,
+    peek: (on) => { if (on) showMonthOf(selectedDay); setPeek(on); },
+    open: () => { setExpanded(true); setPeek(false); },
+    close: () => setExpanded(false),
+    step: (n) => (expanded ? shift(n) : pick(shiftWeek(selectedDay, n))),
+  }, !!templates && !!sessions && !!exercises);
 
   if (!templates || !sessions || !exercises) return <div className="screen" />;
 
@@ -56,19 +83,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
     onOpen(id);
   };
 
-  const pick = (k: string) => { setSelectedDay(k); setSelected(null); setEntering(false); };
   const enter = () => { setEntering(true); setSelected(defaultTemplate(templates, selectedDay)?.id ?? null); };
-  const toggle = () => {
-    if (!expanded) {
-      const d = new Date(dayTs(selectedDay));
-      setView({ y: d.getFullYear(), m: d.getMonth() });
-    }
-    setExpanded(!expanded);
-  };
-  const shift = (n: number) => {
-    const d = new Date(view.y, view.m + n, 1);
-    setView({ y: d.getFullYear(), m: d.getMonth() });
-  };
 
   const planCard = (t: Template, canStart: boolean) => (
     <TemplateCard
@@ -120,7 +135,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
 
   return (
     <div className="screen">
-      <div className="cal">
+      <div className="cal" ref={calRef}>
         <div className="cal-bar">
           {expanded && <button className="cal-btn" aria-label="Vorheriger Monat" onClick={() => shift(-1)}>‹</button>}
           <h1 className={expanded ? 'cal-title-month' : undefined}>{expanded ? fmtMonth(view.y, view.m) : fmtLongDate(dayTs(selectedDay))}</h1>
@@ -136,7 +151,8 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
             </svg>
           </button>
         </div>
-        {expanded ? (
+        <div className="cal-body" ref={bodyRef}>
+        {expanded || peek ? (
           <MonthGrid year={view.y} month={view.m} todayKey={todayKey} selectedKey={selectedDay} statusOf={statusOf} onSelect={pick} />
         ) : (
           <div className="cal-week">
@@ -148,6 +164,7 @@ export function Training({ onOpen }: { onOpen: (sessionId: string) => void }) {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {active && (
