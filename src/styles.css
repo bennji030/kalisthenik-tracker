@@ -340,6 +340,11 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cal-body[data-drag] .cal-month, .cal-body[data-drag] .cal-week { animation: none; }
 .cal-settle { transition: height 0.2s ease-out; }
 .cal-settle .cal-rows, .cal-settle .cal-week, .cal-settle .cal-month { transition: transform 0.2s ease-out; }
+main.tab-settle { transition: transform 0.12s ease-out, opacity 0.12s ease-out; }
+main.tab-in-next { animation: tab-in-next 0.2s ease-out; }
+main.tab-in-prev { animation: tab-in-prev 0.2s ease-out; }
+@keyframes tab-in-next { from { opacity: 0; transform: translateX(48px); } }
+@keyframes tab-in-prev { from { opacity: 0; transform: translateX(-48px); } }
 @keyframes cal-in { from { opacity: 0; transform: translateY(-6px); } }
 .day, .day-empty { min-height: 44px; }
 .day {
@@ -358,6 +363,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .cal-month, .cal-week { animation: none; }
   .cal-toggle svg { transition: none; }
   .cal-settle, .cal-settle .cal-rows, .cal-settle .cal-week, .cal-settle .cal-month { transition: none; }
+  main.tab-settle { transition: none; }
+  main.tab-in-next, main.tab-in-prev { animation: none; }
 }
 
 @media (hover: hover) and (pointer: fine) {
