@@ -7,6 +7,8 @@ import { dayKey, dayTs, fmtWeight, weightSummary } from '../weight';
 import { ageOn, isValidBirthDate, isValidBodyFat, isValidHeight, parseProfile, type Gender, type Profile } from '../profile';
 import type { HistoryTab } from './History';
 import { parseThemePref, type ThemePref } from '../theme';
+import { parseTrainingPrefs } from '../lockScreen';
+import { lockScreenSupported } from '../nowPlaying';
 import { BackupSection } from './BackupSection';
 import { HealthSection } from './HealthSection';
 import { isValidKcalGoal, isValidProteinGoal, isValidStepsGoal, parseGoals, type Goals } from '../dayValues';
@@ -25,6 +27,7 @@ export function Settings({ toast, onBack, goHistory }: {
       </header>
       {stored && <ProfileCard profile={parseProfile(stored.value, Date.now())} goHistory={goHistory} />}
       <ThemeCard />
+      <TrainingCard />
       <HealthSection toast={toast} />
       <BackupSection toast={toast} onReset={onBack} />
     </div>
@@ -199,6 +202,37 @@ function ThemeCard() {
             </button>
           ))}
         </div>
+      </section>
+    </>
+  );
+}
+
+function TrainingCard() {
+  const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('training', undefined) }), []);
+  const prefs = parseTrainingPrefs(stored?.value);
+  const supported = lockScreenSupported();
+  return (
+    <>
+      <h1 className="mt">Training</h1>
+      <section className="card readable settings-form">
+        <label className="toggle">
+          <input type="checkbox" checked={prefs.restSound} onChange={(e) => void setMeta('training', { ...prefs, restSound: e.target.checked })} />
+          <span>Ton bei Pausenende</span>
+        </label>
+        <p className="muted small">Auch für den Erfolgs-Ton.</p>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={prefs.lockScreen}
+            disabled={!supported}
+            onChange={(e) => void setMeta('training', { ...prefs, lockScreen: e.target.checked })}
+          />
+          <span>Sperrbildschirm-Anzeige (Experiment)</span>
+        </label>
+        <p className="muted small">
+          {!supported && 'Dieser Browser unterstützt das nicht. '}
+          Zeigt Pause und Satz auf dem Sperrbildschirm und piept auch bei gesperrtem iPhone. Pausiert dafür laufende Musik (z. B. Spotify), kann Akku kosten und startet beim ersten abgehakten Satz. Endet mit „Zurück“.
+        </p>
       </section>
     </>
   );
