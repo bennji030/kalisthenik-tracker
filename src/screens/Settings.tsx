@@ -8,6 +8,7 @@ import { ageOn, isValidBirthDate, isValidBodyFat, isValidHeight, parseProfile, t
 import type { HistoryTab } from './History';
 import { parseThemePref, type ThemePref } from '../theme';
 import { BackupSection } from './BackupSection';
+import { isValidKcalGoal, isValidProteinGoal, isValidStepsGoal, parseGoals, type Goals } from '../dayValues';
 
 export function Settings({ toast, onBack, goHistory }: {
   toast: (m: string) => void;
@@ -115,6 +116,7 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
           {bad.bodyFat && <span className="hint-warn">3–60 %</span>}
           {profile.bodyFat != null && profile.bodyFatDate && !bad.bodyFat && <span>geändert am {fmtDate(dayTs(profile.bodyFatDate))}</span>}
         </label>
+        <GoalFields />
         <div className="field">Gewicht
           {latest && summary ? (
             <>
@@ -127,6 +129,54 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
           <button className="btn btn-ghost" onClick={() => goHistory('weights')}>Verlauf → Gewicht</button>
         </div>
       </section>
+    </>
+  );
+}
+
+const GOAL_FIELDS: { key: keyof Goals; label: string; valid: (n: unknown) => boolean; range: string }[] = [
+  { key: 'kcal', label: 'Kalorienziel (kcal)', valid: isValidKcalGoal, range: '1000–6000 kcal' },
+  { key: 'proteinG', label: 'Proteinziel (g)', valid: isValidProteinGoal, range: '20–400 g' },
+  { key: 'steps', label: 'Schrittziel', valid: isValidStepsGoal, range: '1000–50000 Schritte' },
+];
+
+/** Ziele in meta `goals`; ein geleertes Feld entfernt das Ziel, dann gilt der Standard. */
+function GoalFields() {
+  const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('goals', undefined) }), []);
+  const [bad, setBad] = useState<Partial<Record<keyof Goals, boolean>>>({});
+  // Neu aufbauen, damit ein geleertes Feld nach dem Verlassen wieder das geltende Ziel zeigt.
+  const [rev, setRev] = useState<Partial<Record<keyof Goals, number>>>({});
+  if (!stored) return null;
+  const goals = parseGoals(stored.value);
+
+  const save = (key: keyof Goals, value: number | undefined) =>
+    db.transaction('rw', db.meta, async () => {
+      const raw = await getMeta<unknown>('goals', undefined);
+      const next: Record<string, unknown> = raw && typeof raw === 'object' && !Array.isArray(raw) ? { ...raw } : {};
+      if (value === undefined) delete next[key];
+      else next[key] = value;
+      await setMeta('goals', next);
+    });
+
+  return (
+    <>
+      {GOAL_FIELDS.map((f) => (
+        <label
+          className="field"
+          key={f.key}
+          onBlur={(e) => { const t = e.target as EventTarget; if (t instanceof HTMLInputElement && !t.value) setRev((r) => ({ ...r, [f.key]: (r[f.key] ?? 0) + 1 })); }}
+        >{f.label}
+          <NumInput
+            key={rev[f.key] ?? 0}
+            value={goals[f.key]}
+            onChange={(v) => {
+              if (v == null) { setBad((b) => ({ ...b, [f.key]: false })); void save(f.key, undefined); }
+              else if (f.valid(v)) { setBad((b) => ({ ...b, [f.key]: false })); void save(f.key, v); }
+              else setBad((b) => ({ ...b, [f.key]: true }));
+            }}
+          />
+          {bad[f.key] && <span className="hint-warn">{f.range}</span>}
+        </label>
+      ))}
     </>
   );
 }
