@@ -13,7 +13,9 @@ in interactive sessions explain each step briefly before doing it.
 - **Never lose training data.** All data lives only in IndexedDB on the phone.
   Schema changes add a new Dexie `version(n)` with an upgrade; old versions are
   never edited. Backup export covers every table; import validates before it
-  clears anything. Destructive actions need an inline confirm step.
+  clears anything. The meta keys `health` and `healthStatus` (Apple Health server
+  address, key and sync status) are device-local: not exported and kept on import.
+  Destructive actions need an inline confirm step.
 - No `window.alert/confirm/prompt` (they misbehave in iOS standalone mode); use
   the inline confirm pattern from `Workout.tsx`.
 - The visible app name is "Calisthenics", but the IndexedDB name `kalisthenik`, the
@@ -35,7 +37,7 @@ queries), `vite-plugin-pwa` (auto-update service worker), Vitest. No UI or CSS
 framework, no router, no chart library.
 
 ```
-src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry, DayValues), saveDay()
+src/db.ts            Dexie schema and types (Exercise, Template/Slot, Session/EntryLog/SetLog, Meta, WeightEntry, DayValues with optional `manual` field list), saveDay()
 src/progression.ts   suggest(): double progression, rep by rep (see below)
 src/progression.test.ts  tests for it (protected)
 src/streak.ts       streak(): Trainings in Folge, Wochen Mo–So (flame counter on Home)
@@ -60,18 +62,23 @@ src/entryDay.ts      entering a training for another day: entryNoon(), defaultTe
 src/entryDay.test.ts tests for it
 src/seed.ts          default exercises and the 4 training days (first start only)
 src/backup.ts        JSON export (iOS share sheet) and import
-src/backupFormat.ts   backup identifier and isBackup() validation (no db import)
+src/backupFormat.ts   backup identifier and isBackup() validation, exportMeta()/importMeta() for device-local meta keys (no db import)
+src/backupMeta.test.ts tests for the meta helpers
 src/today.ts        Home cards: duration estimate, next training, 30-day weight trend
 src/today.test.ts   tests for it
 src/weight.ts        body weight: day keys, 7-entry rolling average, summary, backup validation
 src/weight.test.ts   tests for it
-src/dayValues.ts     steps/kcal/protein per day: validators, mergeDay(), stepsWeek(), goalProgress(), dayTrend(), isDayValuesList(), goals (parseGoals)
+src/dayValues.ts     steps/kcal/protein per day: validators, mergeDay(), stepsWeek(), goalProgress(), dayTrend(), isDayValuesList(), goals (parseGoals), manualFields()/nextManual()
 src/dayValues.test.ts tests for it
+src/health.ts        Apple Health sync, pure: config/status parsing, URL/token validation, shouldSync(), parseDaysResponse(), mergeHealth(), yesterdayKey(), runHealthSync() (fetch passed in)
+src/health.test.ts   tests for it (plus manualFields/nextManual)
+src/healthSync.ts    db + fetch wiring for the sync: syncHealth(force), in-memory throttle and running flag, force-next flag
+src/useHealthSync.ts hook: sync once when ready and on every return to the app; useSyncRunning()
 src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; swipe left/right switches tabs (not from the left edge, the calendar or horizontal scrollers; off in workout, subpages, inputs and confirms); Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
+src/screens/         Home (overview + weigh-in prompt; habit cards Weigh-In, Trainings, Schritte heute, Kalorien heute, Gewicht), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), DayValues (Schritte & Kalorien: entry, 30-day curve, editable list; opened from the Schritte/Kalorien cards), History, PlanEditor, Settings (profile, Darstellung, Apple Health + Daten & Backup), HealthSection (server address, key, shortcut name, Verbindung testen, status, setup guide), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
@@ -113,15 +120,20 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   as "last time" for progression, also when it lies in the future.
 - Schritte & Kalorien: table `days`, one row per local day (YYYY-MM-DD) with
   optional `steps`/`kcal`/`proteinG`, `source` `manual`|`health` and `updatedAt`.
-  Manual entries win over health data; the Health import comes in Teil 3 (nothing
-  writes `health` yet). Goals live in the meta key `goals` (defaults 2200 kcal /
+  Apple Health sync: the meta key `health` holds `{ url, token, shortcut }`, `healthStatus`
+  holds `{ lastSync, error }`. The app fetches the last 30 days from the server once
+  after start and on every return to the app (at most once per 60 s, in memory;
+  "Jetzt aktualisieren" on the steps card runs the iOS shortcut and forces the next
+  fetch). Manual protection is per field: the optional `manual` list on a row names
+  the hand-entered fields, which Health never overwrites (legacy manual rows without
+  a list count as all-manual). After saving, the app deletes the server's days until
+  yesterday. Sync errors show only in Settings → Apple Health, never on Home. Goals live in the meta key `goals` (defaults 2200 kcal /
   160 g protein / 8000 steps, set under Einstellungen → Profil). Entry, curve and
   history with edit/delete are on the DayValues subpage, opened from the Home cards
   "Schritte heute" and "Kalorien heute".
 - Goal: fat loss while keeping strength. Body weight with a 7-day average
   exists (one entry per day; entry on Home, history under Verlauf → Gewicht).
-  Calories, protein and steps can be entered by hand; automatic import is still
-  planned.
+  Calories, protein and steps can be entered by hand or come from Apple Health.
 
 ## Design
 
