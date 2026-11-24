@@ -128,7 +128,7 @@ function ProfileCard({ profile, goHistory }: { profile: Profile; goHistory: (tab
           ) : (
             <span>Noch kein Gewicht eingetragen</span>
           )}
-          <button className="btn btn-ghost" onClick={() => goHistory('nutrition')}>Statistik → Gewicht</button>
+          <button className="btn btn-ghost" onClick={() => goHistory('weight')}>Statistik → Gewicht</button>
         </div>
       </section>
     </>

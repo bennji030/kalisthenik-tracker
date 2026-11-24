@@ -37,7 +37,7 @@ export function HabitMonths({ kind, onBack, goHistory }: {
         <button className="btn btn-ghost" onClick={onBack}>Zurück</button>
       </header>
       {kind === 'weights' && weights.length > 0 && <WeightCurve weights={weights} now={now} />}
-      <button className="btn btn-ghost link-btn" onClick={() => goHistory(kind === 'weights' ? 'nutrition' : 'sessions')}>Zur Statistik</button>
+      <button className="btn btn-ghost link-btn" onClick={() => goHistory(kind === 'weights' ? 'weight' : 'sessions')}>Zur Statistik</button>
       <div className="cards">
         {monthList(earliestKey([...days, ...cardio]), now).map(({ year, month }) => (
           <section className="card month-tiles" key={`${year}-${month}`}>
