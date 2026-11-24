@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
-import { gestureAxis, settle, startAllowed, verticalAllowed } from './calendarGesture';
+import { TOP_SLACK, startAllowed, touchAxis, touchSettle, verticalAllowedAt } from './calendarGesture';
 
 export interface CalendarGestureActions {
   expanded: boolean;
@@ -20,6 +20,9 @@ interface Sample { t: number; x: number; y: number }
 type Touch = {
   x0: number; y0: number;
   axis: 'x' | 'y' | 'none' | null;
+  /** Kalender oben sichtbar: Seitenscrollen für diesen Touch von Anfang an unterbinden. */
+  claim: boolean;
+  calTop: number;
   samples: Sample[];
   v?: VerticalDrag;
 };
@@ -110,7 +113,8 @@ export function useCalendarGesture(
       touch = null;
       if (settling || e.touches.length !== 1 || !startAllowed(e.touches[0].clientX)) return;
       const t = e.touches[0];
-      touch = { x0: t.clientX, y0: t.clientY, axis: null, samples: [{ t: e.timeStamp, x: t.clientX, y: t.clientY }] };
+      const calTop = cal.getBoundingClientRect().top;
+      touch = { x0: t.clientX, y0: t.clientY, axis: null, claim: calTop >= -TOP_SLACK, calTop, samples: [{ t: e.timeStamp, x: t.clientX, y: t.clientY }] };
       const tgt = e.target as EventTarget;
       target = tgt;
       tgt.addEventListener('touchmove', onMove as EventListener, { passive: false });
@@ -127,12 +131,14 @@ export function useCalendarGesture(
       touch.samples.push({ t: e.timeStamp, x: t.clientX, y: t.clientY });
       touch.samples = touch.samples.filter((s) => e.timeStamp - s.t <= VELOCITY_WINDOW_MS);
 
+      if (touch.claim && e.cancelable) e.preventDefault();
+
       if (touch.axis === null) {
-        const axis = gestureAxis(dx, dy);
+        const axis = touchAxis(dx, dy);
         if (axis === null) return;
         touch.axis = axis;
         if (axis === 'y') {
-          if (!verticalAllowed(act.current.expanded, dy, window.scrollY)) touch.axis = 'none';
+          if (!verticalAllowedAt(act.current.expanded, dy, touch.calTop)) touch.axis = 'none';
           else {
             touch.v = claimVertical(act.current.expanded) ?? undefined;
             if (!touch.v) touch.axis = 'none';
@@ -144,7 +150,7 @@ export function useCalendarGesture(
         }
       }
       if (touch.axis === 'none') return;
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       if (touch.axis === 'x') {
         const el = content();
         if (el) el.style.transform = `translateX(${dx}px)`;
@@ -169,7 +175,7 @@ export function useCalendarGesture(
       if (tc.axis === 'x') {
         const el = content();
         const width = body.offsetWidth;
-        const s = e ? settle(dx, vx, width) : 0;
+        const s = e ? touchSettle(dx, vx, width) : 0;
         if (el) el.style.transform = `translateX(${s * width}px)`;
         finish(
           () => { if (s !== 0) flushSync(() => act.current.step(s < 0 ? 1 : -1)); },
@@ -178,7 +184,7 @@ export function useCalendarGesture(
       } else if (tc.v) {
         const v = tc.v;
         const expanded = v.startP === 1;
-        const s = e ? settle(dy, vy, v.range) : 0;
+        const s = e ? touchSettle(dy, vy, v.range) : 0;
         const commit = expanded ? s === -1 : s === 1;
         setVertical(v, commit ? 1 - v.startP : v.startP);
         finish(

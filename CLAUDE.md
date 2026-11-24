@@ -45,8 +45,9 @@ src/monthTiles.ts    month list, per-month counts and summary text for the Home 
 src/monthTiles.test.ts tests for it
 src/calendar.ts      week/month day keys, dayStatus() (done/open/missed/none/cardio/cardio-open), plannedWeekdays()
 src/calendar.test.ts tests for it
-src/calendarGesture.ts pure swipe decisions for the Training calendar (axis, edge, settle, shiftWeek)
+src/calendarGesture.ts pure swipe decisions for the Training calendar (axis, edge, settle, shiftWeek; tunable touch thresholds `TOUCH_*`, `TOP_SLACK`)
 src/calendarGesture.test.ts tests for it
+src/calendarGestureTouch.test.ts tests for the touch variants
 src/useCalendarGesture.ts touch wiring (React hook) for those gestures
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
 src/cardio.ts        cardio day: strength/cardio filters, cardioSummary(), logCardio(), one-time ensureCardioDay() (meta flag `cardioDay`)
@@ -64,7 +65,7 @@ src/theme.ts         theme preference (dark/light/system), applyTheme()
 src/util.ts          formatting helpers (German number/date format)
 src/profile.ts       Profile type (name, gender, height, birth date, body fat), validation, ageOn(); stored in meta key `profile`
 src/App.tsx          tab bar (Home, Training, Verlauf, Plan), toast; Settings opens from the gear on Home
-src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical only when the page is at the top), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
+src/screens/         Home (overview + weigh-in prompt), Training (week calendar that expands to a month, plus the selected day's card; swipe gestures: pull down/up = month/week, swipe left/right = next/previous week or month, not from the left edge, vertical while the calendar top is visible; grab handle below the calendar), Workout, HabitMonths (month tiles for Trainings/Weigh-In, opened from the Home cards), History, PlanEditor, Settings (profile + Daten & Backup), BackupSection
 src/components/      NumInput, RestTimer, LineChart (hand-written SVG), Weight (Home card, stats), MonthGrid (month calendar, props only, no db), SessionLog (exercise/sets log shared by Verlauf and Training), CardioCheck (check off a cardio day: optional minutes and note, shared by Home and Training)
 src/styles.css       all styles, tokens on :root
 factory/             the software factory (see below)
