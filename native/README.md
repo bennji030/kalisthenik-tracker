@@ -53,6 +53,18 @@ cd kalisthenik-tracker
 git checkout factory/039-native-app-teil-1
 ```
 
+Dann die Git-Identität nur für diesen Ordner setzen (ohne `--global`). So
+landet bei einem späteren Commit nicht deine private E-Mail-Adresse im
+öffentlichen Repo, sondern die anonyme GitHub-Adresse:
+
+```
+git config user.name bennji030
+```
+
+```
+git config user.email 205840391+bennji030@users.noreply.github.com
+```
+
 ## 4. Pakete installieren
 
 Zuerst im Hauptordner (`kalisthenik-tracker`):
