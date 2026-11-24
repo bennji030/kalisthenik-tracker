@@ -85,6 +85,7 @@ main { max-width: 560px; margin: 0 auto; }
   flex-direction: column;
   gap: 12px;
 }
+.stack { display: flex; flex-direction: column; gap: 12px; }
 .workout { padding-bottom: calc(var(--safe-bottom) + 120px); }
 
 h1 { font-size: 28px; margin: 0; letter-spacing: -0.02em; }
@@ -251,11 +252,15 @@ p { margin: 0; }
 .chart-tick { fill: var(--muted); font-size: 10px; }
 .chart-value { fill: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; stroke: var(--card); stroke-width: 3px; paint-order: stroke; stroke-linejoin: round; }
 .chart-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart-goal { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+.chart-bar-accent { fill: var(--accent); }
+.chart-bar-cardio { fill: var(--cardio); }
 .stat-group { display: flex; flex-direction: column; gap: 8px; }
 .stat-heading { margin: 8px 0 0; font-size: 17px; }
 .stat-card { display: block; width: 100%; border: 0; color: inherit; text-align: left; font: inherit; }
 .stat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .stat-name { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.stat-right { flex: none; align-items: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
 .stat-title { font-weight: 600; }
 .stat-change { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
 .stat-change.up { color: var(--ok); }

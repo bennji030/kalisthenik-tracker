@@ -99,7 +99,7 @@ export function App() {
         ) : tab === 'home' ? (
           <Home goTraining={() => go('training')} goSettings={openSettings} goHabit={(k) => { setHabitView(k); window.scrollTo(0, 0); }}
             goDay={(v) => { setDayView(v); window.scrollTo(0, 0); }}
-            openWorkout={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goWeight={() => goHistory('nutrition')} />
+            openWorkout={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} goWeight={() => goHistory('weight')} />
         ) : tab === 'training' ? (
           <Training onOpen={(id) => { setWorkoutId(id); window.scrollTo(0, 0); }} />
         ) : tab === 'history' && dayView ? (

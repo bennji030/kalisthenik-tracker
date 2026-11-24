@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, saveWeight, type Exercise, type Session, type Template } from '../db';
+import { db, getMeta, saveWeight, type DayValues, type Exercise, type Session, type Template } from '../db';
+import { BarChart } from '../components/BarChart';
 import { LineChart } from '../components/LineChart';
 import { NumInput } from '../components/NumInput';
 import { WeightStats } from '../components/Weight';
 import { SessionLog } from '../components/SessionLog';
 import { cardioOnly, cardioSummary, isCardioSession, strengthOnly } from '../cardio';
+import { parseGoals } from '../dayValues';
+import { cardioWeeks, dayBars, weightWeek, weightWeekChange } from '../statsCharts';
 import { exerciseGroup, exerciseOrder, exerciseWindow, fmtChange, GROUPS, WINDOW, windowChange } from '../stats';
 import type { DayView } from './DayValues';
-import { fmtDate, fmtShortDate, summarizeSets } from '../util';
-import { dayTs, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
+import { fmtDate, fmtInt, fmtShortDate, summarizeSets, WEEKDAYS } from '../util';
+import { dayTs, fmtDelta, fmtWeight, isValidKg, rollingAverages, type WeightPoint } from '../weight';
 
-export type HistoryTab = 'training' | 'nutrition' | 'cardio' | 'sessions';
+export type HistoryTab = 'training' | 'nutrition' | 'cardio' | 'sessions' | 'weight';
 
 export function History({ initialTab = 'training', goDay }: { initialTab?: HistoryTab; goDay: (v: DayView) => void }) {
   const [tab, setTab] = useState<HistoryTab>(initialTab);
@@ -23,7 +26,7 @@ export function History({ initialTab = 'training', goDay }: { initialTab?: Histo
   const templates = useLiveQuery(() => db.templates.toArray(), []);
   if (!sessions || !exercises || !templates) return <div className="screen" />;
   const exMap = new Map(exercises.map((e) => [e.id, e]));
-  const seg = tab === 'sessions' ? 'training' : tab;
+  const seg = tab === 'sessions' ? 'training' : tab === 'weight' ? 'nutrition' : tab;
 
   return (
     <div className="screen">
@@ -38,16 +41,16 @@ export function History({ initialTab = 'training', goDay }: { initialTab?: Histo
           <button className="btn btn-ghost link-btn" onClick={() => setTab('training')}>‹ Statistik</button>
           <div className="cards">{sessions.map((s) => <SessionCard key={s.id} s={s} exMap={exMap} />)}</div>
         </>
+      ) : tab === 'weight' ? (
+        <>
+          <button className="btn btn-ghost link-btn" onClick={() => setTab('nutrition')}>‹ Statistik</button>
+          <WeightHistory />
+        </>
       ) : tab === 'training'
         ? <TrainingStats sessions={strengthOnly(sessions)} exercises={exercises} templates={templates} openAll={() => setTab('sessions')} />
         : tab === 'cardio'
           ? <CardioList sessions={cardioOnly(sessions)} />
-          : (
-            <>
-              <button className="btn btn-ghost link-btn" onClick={() => goDay('kcal')}>Schritte & Kalorien</button>
-              <WeightHistory />
-            </>
-          )}
+          : <NutritionStats openWeight={() => setTab('weight')} goDay={goDay} />}
     </div>
   );
 }
@@ -171,9 +174,76 @@ function ExerciseDetail({ ex, sessions, back }: { ex: Exercise; sessions: Sessio
   );
 }
 
+function NutritionStats({ openWeight, goDay }: { openWeight: () => void; goDay: (v: DayView) => void }) {
+  const data = useLiveQuery(async () => ({
+    weights: await db.weights.toArray(),
+    days: await db.days.toArray(),
+    goals: parseGoals(await getMeta<unknown>('goals', undefined)),
+  }), []);
+  if (!data) return null;
+  const now = Date.now();
+  const win = weightWeek(data.weights, now);
+  const change = weightWeekChange(win);
+  const newest = win[win.length - 1];
+  const open = () => goDay('kcal');
+  return (
+    <div className="cards">
+      <button className="card stat-card" onClick={openWeight}>
+        <span className="stat-head">
+          <span className="stat-name">
+            <span className="stat-title">Körpergewicht</span>
+            <span className="muted small">Letzte 7 Tage</span>
+          </span>
+          {newest && (
+            <span className="stat-name stat-right">
+              <span className="stat-title">{fmtWeight(newest.kg)} kg</span>
+              {change !== null && <span className={`weight-delta ${change < 0 ? 'down' : ''}`}>{fmtDelta(change)}</span>}
+            </span>
+          )}
+        </span>
+        {win.length === 0 ? <p className="muted small">Noch kein Gewicht eingetragen.</p> : (
+          <LineChart unit="kg" pointLabels
+            points={win.map((e) => ({ x: dayTs(e.date), y: e.kg, label: fmtShortDate(dayTs(e.date)) }))}
+            emptyText="Ab zwei Einträgen in den letzten 7 Tagen gibt es hier eine Kurve." />
+        )}
+      </button>
+      <DayBarCard title="Kalorien" unit="kcal" field="kcal" hint="Noch keine Kalorien" days={data.days} goal={data.goals.kcal} now={now} open={open} />
+      <DayBarCard title="Protein" unit="g" field="proteinG" hint="Noch kein Protein" days={data.days} goal={data.goals.proteinG} now={now} open={open} />
+    </div>
+  );
+}
+
+function DayBarCard({ title, unit, field, hint, days, goal, now, open }: {
+  title: string; unit: string; field: 'kcal' | 'proteinG'; hint: string; days: DayValues[]; goal: number; now: number; open: () => void;
+}) {
+  const bars = dayBars(days, field, now);
+  return (
+    <button className="card stat-card" onClick={open}>
+      <span className="stat-head">
+        <span className="stat-name">
+          <span className="stat-title">{title}</span>
+          <span className="muted small">Letzte 7 Tage · Ziel {fmtInt(goal)} {unit}</span>
+        </span>
+      </span>
+      {bars.every((b) => b.value === null)
+        ? <p className="muted small">{hint} in den letzten 7 Tagen. Tippen zum Eintragen.</p>
+        : <BarChart label={`${title} der letzten 7 Tage in ${unit}`} goal={goal} fmt={fmtInt} bars={bars.map((b) => ({ label: WEEKDAYS[new Date(dayTs(b.date)).getDay()], value: b.value }))} />}
+    </button>
+  );
+}
+
 function CardioList({ sessions }: { sessions: Session[] }) {
   if (sessions.length === 0) return <p className="muted">Noch keine Cardio-Einträge. Abhaken geht auf Home oder im Training-Tab.</p>;
+  const weeks = cardioWeeks(sessions, Date.now());
   return (
+    <div className="readable stack">
+    <section className="card">
+      <h2>Cardio pro Woche</h2>
+      <p className="muted small">Letzte 8 Wochen</p>
+      {weeks.every((w) => w.count === 0)
+        ? <p className="muted small">In den letzten 8 Wochen kein Cardio.</p>
+        : <BarChart tone="cardio" label="Cardio-Einheiten pro Woche der letzten 8 Wochen" fmt={fmtInt} bars={weeks.map((w) => ({ label: fmtShortDate(dayTs(w.start)), value: w.count }))} />}
+    </section>
     <ul className="list">
       {sessions.map((s) => (
         <li key={s.id} className="cardio-row">
@@ -182,6 +252,7 @@ function CardioList({ sessions }: { sessions: Session[] }) {
         </li>
       ))}
     </ul>
+    </div>
   );
 }
 
