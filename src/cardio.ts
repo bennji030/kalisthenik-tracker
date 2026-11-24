@@ -80,7 +80,7 @@ export function ensureCardioDay(store: CardioDayStore): Promise<void> {
   });
 }
 
-const dbStore: CardioDayStore = {
+export const cardioDayDbStore: CardioDayStore = {
   transaction: (fn) => db.transaction('rw', db.templates, db.meta, fn),
   isDone: async () => (await getMeta('cardioDay', false)) === true,
   templates: () => db.templates.toArray(),
@@ -89,5 +89,5 @@ const dbStore: CardioDayStore = {
 };
 
 export function ensureCardioDayInDb(): Promise<void> {
-  return ensureCardioDay(dbStore);
+  return ensureCardioDay(cardioDayDbStore);
 }
