@@ -21,8 +21,9 @@ public class RestActivityPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve()
             return
         }
+        let reply = Reply(call: call)
         Task {
-            await Self.endAll()
+            await endAllRests()
             let state = RestActivityAttributes.ContentState(startedAt: Date(), endsAt: endsAt, exercise: exercise, set: set)
             do {
                 _ = try Activity<RestActivityAttributes>.request(
@@ -30,29 +31,31 @@ public class RestActivityPlugin: CAPPlugin, CAPBridgedPlugin {
                     content: ActivityContent(state: state, staleDate: endsAt),
                     pushType: nil
                 )
-                call.resolve()
+                await reply.resolve()
             } catch {
-                call.reject(error.localizedDescription)
+                await reply.reject(error.localizedDescription)
             }
         }
     }
 
     @objc func updateRest(_ call: CAPPluginCall) {
         guard let endsAt = endDate(call) else { return }
+        let reply = Reply(call: call)
         Task {
             for activity in Activity<RestActivityAttributes>.activities {
                 var state = activity.content.state
                 state.endsAt = endsAt
                 await activity.update(ActivityContent(state: state, staleDate: endsAt))
             }
-            call.resolve()
+            await reply.resolve()
         }
     }
 
     @objc func endRest(_ call: CAPPluginCall) {
+        let reply = Reply(call: call)
         Task {
-            await Self.endAll()
-            call.resolve()
+            await endAllRests()
+            await reply.resolve()
         }
     }
 
@@ -64,10 +67,24 @@ public class RestActivityPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         return Date(timeIntervalSince1970: ms / 1000)
     }
+}
 
-    private static func endAll() async {
-        for activity in Activity<RestActivityAttributes>.activities {
-            await activity.end(nil, dismissalPolicy: .immediate)
-        }
+private func endAllRests() async {
+    for activity in Activity<RestActivityAttributes>.activities {
+        await activity.end(nil, dismissalPolicy: .immediate)
+    }
+}
+
+// CAPPluginCall ist nicht Sendable. Die Hülle reicht den Aufruf in den Task und antwortet nur auf dem Main Actor,
+// so bleibt der Code auch im Swift-6-Modus ohne Fehler.
+private struct Reply: @unchecked Sendable {
+    let call: CAPPluginCall
+
+    @MainActor func resolve() {
+        call.resolve()
+    }
+
+    @MainActor func reject(_ message: String) {
+        call.reject(message)
     }
 }
