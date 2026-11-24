@@ -58,6 +58,8 @@ src/tabSwipe.ts      pure decisions for swiping between tabs (adjacentTab, swipe
 src/tabSwipe.test.ts tests for it
 src/useTabSwipe.ts   touch wiring (React hook) for tab swiping
 src/sessions.ts      history lookup per slot, planTemplate(), startSession()
+src/addedExercise.ts exercises added during a workout: DEFAULT_SLOT, addedEntry(), isAdded(), planQuestions(), slotFromEntry(), appendSlot()
+src/addedExercise.test.ts tests for it (plus suggest() after a free entry)
 src/cardio.ts        cardio day: strength/cardio filters, cardioSummary(), logCardio(), one-time ensureCardioDay() (meta flag `cardioDay`)
 src/cardio.test.ts   tests for it
 src/entryDay.ts      entering a training for another day: entryNoon(), defaultTemplate(), entryTimes()
@@ -113,6 +115,14 @@ Base path is `/kalisthenik-tracker/` (GitHub Pages), set in `vite.config.ts`.
   of the range → +increment kg and back to the bottom; missed → same target; 3
   misses in a row at the same weight → about −10 % and rebuild. History is per
   slot within its training day.
+- Exercises can be added during a workout ("+ Übung": pick one or create a new one;
+  a same-named exercise is reused). An added exercise is an entry whose `slotId` is
+  not in the template: free, 3 empty sets, removable (inline confirm once a set is
+  done). After saving, the app asks per added exercise with a done set that is not
+  already in that training day whether to add it to the end of the day with the
+  default slot values (`DEFAULT_SLOT`; weighted start weight from today's first done
+  set). The new slot reuses the entry's slot id, so the workout counts as last time;
+  `suggest()` treats a free last entry on a progression slot as "Erstes Mal".
 - Streak (`streak`): weeks Mo–So; a past week counts when finished sessions ≥ number of
   training days (templates), the current week never breaks it; flames = sessions in those weeks.
 - Habit cards (Home, bottom): Weigh-In and Trainings, 30 local days as 3×10 dots, week Mo–So,

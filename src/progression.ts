@@ -61,6 +61,17 @@ export function suggest(slot: Slot, type: ExType, history: EntryLog[]): Suggesti
     };
   }
 
+  // Letztes Mal frei eingetragen (z. B. im Training hinzugefügt): wie ein erstes Mal, mit dem Gewicht von damals.
+  if (last && !last.sets.some((s) => s.targetReps != null)) {
+    return {
+      kind: 'first',
+      weight: weighted ? (last.sets.find((s) => s.done)?.weight ?? slot.startWeight) : null,
+      reps: fill(slot.repMin),
+      sec: fill(null),
+      label: weighted ? 'Erstes Mal – Gewicht prüfen und anpassen' : 'Erstes Mal – Startwerte',
+    };
+  }
+
   if (!last) {
     return {
       kind: 'first',

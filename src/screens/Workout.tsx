@@ -1,13 +1,15 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getMeta, type EntryLog, type Exercise, type Session, type SetLog } from '../db';
+import { db, getMeta, type EntryLog, type Exercise, type ExType, type Session, type SetLog } from '../db';
+import { addedEntry, appendSlot, isAdded, planQuestions, slotFromEntry } from '../addedExercise';
 import { NumInput } from '../components/NumInput';
 import { RestTimer, unlockAudio } from '../components/RestTimer';
 import { entryDayFor, entryNoon, entryTimes } from '../entryDay';
 import { entrySucceeded } from '../progression';
 import { REPS_STEP, SEC_STEP, stepValue, weightStep } from '../stepper';
 import { ENTRY_DAY_KEY, type EntryDay } from '../sessions';
-import { fmtAddedKg, fmtDate, fmtKg } from '../util';
+import { fmtAddedKg, fmtDate, fmtKg, uid } from '../util';
+import { TYPE_LABEL } from './PlanEditor';
 
 const KIND_CLASS: Record<string, string> = {
   'up-reps': 'pill-up', 'up-weight': 'pill-up', first: 'pill-neutral', repeat: 'pill-warn',
@@ -33,6 +35,9 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const [session, setSession] = useState<Session | null>(null);
   const [rest, setRest] = useState(loadRest);
   const [confirm, setConfirm] = useState<null | 'finish' | 'discard'>(null);
+  const [adding, setAdding] = useState(false);
+  // Nach dem Speichern: Fragen zu hinzugefügten Übungen, eine nach der anderen.
+  const [questions, setQuestions] = useState<{ list: EntryLog[]; i: number; msg: string } | null>(null);
   const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const exMap = new Map((exercises ?? []).map((e) => [e.id, e]));
   const template = useLiveQuery(async () => (session ? db.templates.get(session.templateId) : undefined), [session?.templateId]);
@@ -102,6 +107,24 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
   const removeSet = (ei: number) =>
     updateEntry(ei, (e) => ({ ...e, sets: e.sets.slice(0, Math.max(0, e.sets.length - 1)) }));
 
+  const addExercise = (ex: Exercise) => {
+    setSession((s) => s && { ...s, entries: [...s.entries, addedEntry(ex, uid())] });
+    setAdding(false);
+  };
+  const createExercise = async (name: string, type: ExType) => {
+    const n = name.trim();
+    const ex = await db.transaction('rw', db.exercises, async () => {
+      const found = (await db.exercises.toArray()).find((e) => e.name.trim().toLowerCase() === n.toLowerCase());
+      if (found) return found;
+      const created: Exercise = { id: uid(), name: n, type };
+      await db.exercises.add(created);
+      return created;
+    });
+    addExercise(ex);
+  };
+  const removeEntry = (ei: number) =>
+    setSession((s) => s && { ...s, entries: s.entries.filter((_, i) => i !== ei) });
+
   const doneSets = session.entries.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
   const totalSets = session.entries.reduce((n, e) => n + e.sets.length, 0);
   const mins = Math.round((Date.now() - session.startedAt) / 60000);
@@ -121,7 +144,23 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
     setRestTimer(null);
     const hits = s.entries.filter((e) => e.kind !== 'free' && entrySucceeded(e)).length;
     const judged = s.entries.filter((e) => e.kind !== 'free').length;
-    onClose(`Gespeichert · ${hits}/${judged} Ziele geschafft 💪`);
+    const msg = `Gespeichert · ${hits}/${judged} Ziele geschafft 💪`;
+    const list = planQuestions(s, template);
+    if (list.length) setQuestions({ list, i: 0, msg });
+    else onClose(msg);
+  };
+  const answer = async (yes: boolean) => {
+    if (!questions) return;
+    const e = questions.list[questions.i];
+    const ex = exMap.get(e.exerciseId);
+    if (yes && ex) {
+      await db.transaction('rw', db.templates, async () => {
+        const t = await db.templates.get(session.templateId);
+        if (t) await db.templates.put(appendSlot(t, slotFromEntry(e, ex.type)));
+      });
+    }
+    if (questions.i + 1 < questions.list.length) setQuestions({ ...questions, i: questions.i + 1 });
+    else onClose(questions.msg);
   };
   const discard = async () => {
     await db.transaction('rw', db.sessions, db.meta, async () => {
@@ -141,9 +180,19 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
           {entryDay && <p className="muted small">für {fmtDate(entryNoon(entryDay), true)}</p>}
           <p className="muted small">{doneSets}/{totalSets} Sätze · {mins} min</p>
         </div>
-        <button className="btn btn-ghost" onClick={() => onClose()}>Zurück</button>
+        {!questions && <button className="btn btn-ghost" onClick={() => onClose()}>Zurück</button>}
       </header>
 
+      {questions ? (
+        <section className="card">
+          <h2>{exMap.get(questions.list[questions.i].exerciseId)?.name} künftig auch in {template?.name ?? session.templateName}?</h2>
+          <p className="muted small">Kommt ans Ende des Trainingstags, Werte änderst du im Plan.</p>
+          <div className="row">
+            <button className="btn btn-primary wo-answer" onClick={() => answer(true)}>Ja</button>
+            <button className="btn wo-answer" onClick={() => answer(false)}>Nein</button>
+          </div>
+        </section>
+      ) : (<>
       <div className="cards">
       {session.entries.map((e, ei) => {
         const ex = exMap.get(e.exerciseId);
@@ -158,6 +207,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
             onToggle={(si) => toggleDone(ei, si)}
             onAdd={() => addSet(ei)}
             onRemove={() => removeSet(ei)}
+            onDelete={template && isAdded(e, template) ? () => removeEntry(ei) : undefined}
           />
         );
       })}
@@ -166,6 +216,11 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
       <div className="wo-actions">
         {confirm === null && (
           <>
+            {adding ? (
+              <AddExercise exercises={exercises} onPick={addExercise} onCreate={createExercise} onCancel={() => setAdding(false)} />
+            ) : (
+              <button className="btn wo-add" onClick={() => setAdding(true)}>+ Übung</button>
+            )}
             <button className="btn btn-primary btn-big" onClick={() => setConfirm('finish')}>Training beenden</button>
             <button className="btn btn-ghost danger" onClick={() => setConfirm('discard')}>Training verwerfen</button>
           </>
@@ -189,6 +244,7 @@ export function Workout({ sessionId, onClose }: { sessionId: string; onClose: (m
           </div>
         )}
       </div>
+      </>)}
 
       {rest && <RestTimer endAt={rest.endAt} total={rest.total} onChange={setRestTimer} />}
     </div>
@@ -213,9 +269,11 @@ interface CardProps {
   onToggle: (si: number) => void;
   onAdd: () => void;
   onRemove: () => void;
+  onDelete?: () => void; // nur für im Training hinzugefügte Übungen
 }
 
-function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }: CardProps) {
+function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove, onDelete }: CardProps) {
+  const [confirmDel, setConfirmDel] = useState(false);
   const t = ex.type;
   const allDone = entry.sets.length > 0 && entry.sets.every((s) => s.done);
   const hasTarget = entry.sets.some((s) => s.targetReps != null);
@@ -233,7 +291,22 @@ function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }
   );
   return (
     <section className={`card ex-card ${allDone ? 'ex-done' : ''}`}>
-      <h2>{ex.name}</h2>
+      <div className="ex-head">
+        <h2>{ex.name}</h2>
+        {onDelete && !confirmDel && (
+          <button className="btn btn-small btn-ghost danger ex-del"
+            onClick={() => (entry.sets.some((s) => s.done) ? setConfirmDel(true) : onDelete())}>Entfernen</button>
+        )}
+      </div>
+      {onDelete && confirmDel && (
+        <div className="confirm confirm-inset">
+          <p>Übung entfernen? Erledigte Sätze gehen verloren.</p>
+          <div className="row">
+            <button className="btn btn-danger" onClick={onDelete}>Entfernen</button>
+            <button className="btn" onClick={() => setConfirmDel(false)}>Abbrechen</button>
+          </div>
+        </div>
+      )}
       {entry.lastSummary && <p className="muted small">Letztes Mal: {entry.lastSummary}</p>}
       <p className={`pill ${KIND_CLASS[entry.kind]}`}>{entry.label}</p>
 
@@ -290,6 +363,55 @@ function ExerciseCard({ entry, ex, increment, onSet, onToggle, onAdd, onRemove }
         {entry.sets.length > 0 && <button className="btn btn-small" onClick={onRemove}>− Satz</button>}
         {entry.restSec > 0 && <span className="muted small push-right">Pause {fmtKg(entry.restSec / 60)} min</span>}
       </div>
+    </section>
+  );
+}
+
+const NEW_TYPE_LABEL: Record<ExType, string> = { weighted: 'Zusatzgewicht', reps: 'Wiederholungen', hold: 'Halten' };
+
+interface AddProps {
+  exercises: Exercise[];
+  onPick: (ex: Exercise) => void;
+  onCreate: (name: string, type: ExType) => Promise<void>;
+  onCancel: () => void;
+}
+
+function AddExercise({ exercises, onPick, onCreate, onCancel }: AddProps) {
+  const [query, setQuery] = useState('');
+  const [name, setName] = useState('');
+  const [type, setType] = useState<ExType>('reps');
+  const q = query.trim().toLowerCase();
+  const list = exercises
+    .filter((e) => e.name.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  return (
+    <section className="card add-ex">
+      <h2>Übung hinzufügen</h2>
+      <input className="add-search" type="search" placeholder="Übung suchen" value={query}
+        onChange={(e) => setQuery(e.target.value)} aria-label="Übung suchen" />
+      {list.length ? (
+        <ul className="pick-list">
+          {list.map((e) => (
+            <li key={e.id}>
+              <button className="pick-row" onClick={() => onPick(e)}>
+                <span className="pick-name">{e.name}</span>
+                <span className="muted small">{TYPE_LABEL[e.type]}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted small">Keine Übung gefunden.</p>
+      )}
+      <div className="lib-new">
+        <h3 className="add-sub">Neue Übung</h3>
+        <input placeholder="Name, z. B. Toes to Bar" value={name} onChange={(e) => setName(e.target.value)} aria-label="Name der neuen Übung" />
+        <select value={type} onChange={(e) => setType(e.target.value as ExType)} aria-label="Art der neuen Übung">
+          {(Object.keys(NEW_TYPE_LABEL) as ExType[]).map((k) => <option key={k} value={k}>{NEW_TYPE_LABEL[k]}</option>)}
+        </select>
+        <button className="btn btn-primary" disabled={!name.trim()} onClick={() => void onCreate(name, type)}>Anlegen</button>
+      </div>
+      <button className="btn" onClick={onCancel}>Abbrechen</button>
     </section>
   );
 }
