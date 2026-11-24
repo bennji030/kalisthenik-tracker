@@ -12,7 +12,7 @@ export function unlockAudio() {
   }
 }
 
-function beep() {
+export function beep() {
   if (!audioCtx) return;
   const t = audioCtx.currentTime;
   [0, 0.25, 0.5].forEach((d, i) => {
@@ -51,9 +51,10 @@ interface Props {
   endAt: number;
   total: number;
   onChange: (endAt: number | null, total?: number) => void;
+  onEnd?: () => void;
 }
 
-export function RestTimer({ endAt, total, onChange }: Props) {
+export function RestTimer({ endAt, total, onChange, onEnd }: Props) {
   const [now, setNow] = useState(Date.now());
   const left = Math.max(0, Math.ceil((endAt - now) / 1000));
 
@@ -64,7 +65,7 @@ export function RestTimer({ endAt, total, onChange }: Props) {
 
   useEffect(() => {
     if (left === 0) {
-      beep();
+      onEnd?.();
       const t = setTimeout(() => onChange(null), 4000);
       return () => clearTimeout(t);
     }

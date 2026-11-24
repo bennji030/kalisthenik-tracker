@@ -7,6 +7,8 @@ import { dayKey, dayTs, fmtWeight, weightSummary } from '../weight';
 import { ageOn, isValidBirthDate, isValidBodyFat, isValidHeight, parseProfile, type Gender, type Profile } from '../profile';
 import type { HistoryTab } from './History';
 import { parseThemePref, type ThemePref } from '../theme';
+import { parseTrainingPrefs } from '../lockScreen';
+import { lockScreenSupported } from '../nowPlaying';
 import { BackupSection } from './BackupSection';
 import { HealthSection } from './HealthSection';
 import { isValidKcalGoal, isValidProteinGoal, isValidStepsGoal, parseGoals, type Goals } from '../dayValues';
@@ -25,6 +27,7 @@ export function Settings({ toast, onBack, goHistory }: {
       </header>
       {stored && <ProfileCard profile={parseProfile(stored.value, Date.now())} goHistory={goHistory} />}
       <ThemeCard />
+      <TrainingCard />
       <HealthSection toast={toast} />
       <BackupSection toast={toast} />
     </div>
@@ -199,6 +202,36 @@ function ThemeCard() {
             </button>
           ))}
         </div>
+      </section>
+    </>
+  );
+}
+
+function TrainingCard() {
+  const stored = useLiveQuery(async () => ({ value: await getMeta<unknown>('training', undefined) }), []);
+  const prefs = parseTrainingPrefs(stored?.value);
+  const supported = lockScreenSupported();
+  return (
+    <>
+      <h1 className="mt">Training</h1>
+      <section className="card readable settings-form">
+        <label className="toggle">
+          <input type="checkbox" checked={prefs.restSound} onChange={(e) => void setMeta('training', { ...prefs, restSound: e.target.checked })} />
+          <span>Ton bei Pausenende</span>
+        </label>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={prefs.lockScreen}
+            disabled={!supported}
+            onChange={(e) => void setMeta('training', { ...prefs, lockScreen: e.target.checked })}
+          />
+          <span>Sperrbildschirm-Anzeige (Experiment)</span>
+        </label>
+        <p className="muted small">
+          Zeigt Pause und Satz auf dem Sperrbildschirm. Nutzt eine stille Audiospur, das kann Akku kosten, und iOS kann sie beenden. Startet beim ersten abgehakten Satz.
+          {!supported && ' Dieser Browser unterstützt das nicht.'}
+        </p>
       </section>
     </>
   );
