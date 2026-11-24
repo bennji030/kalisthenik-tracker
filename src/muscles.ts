@@ -100,7 +100,7 @@ export function ensureMuscleDefaults(store: MuscleDefaultsStore): Promise<void> 
   });
 }
 
-const dbStore: MuscleDefaultsStore = {
+export const muscleDefaultsDbStore: MuscleDefaultsStore = {
   transaction: (fn) => db.transaction('rw', db.exercises, db.meta, fn),
   isDone: async () => (await getMeta('muscleDefaults', false)) === true,
   exercises: () => db.exercises.toArray(),
@@ -109,5 +109,5 @@ const dbStore: MuscleDefaultsStore = {
 };
 
 export function ensureMuscleDefaultsInDb(): Promise<void> {
-  return ensureMuscleDefaults(dbStore);
+  return ensureMuscleDefaults(muscleDefaultsDbStore);
 }

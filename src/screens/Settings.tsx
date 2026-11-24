@@ -29,7 +29,7 @@ export function Settings({ toast, onBack, goHistory }: {
       <ThemeCard />
       <TrainingCard />
       <HealthSection toast={toast} />
-      <BackupSection toast={toast} />
+      <BackupSection toast={toast} onReset={onBack} />
     </div>
   );
 }

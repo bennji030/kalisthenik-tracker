@@ -93,7 +93,7 @@ export function seed(store: SeedStore): Promise<void> {
   });
 }
 
-const dbStore: SeedStore = {
+export const seedDbStore: SeedStore = {
   transaction: (fn) => db.transaction('rw', db.exercises, db.templates, db.meta, fn),
   isSeeded: async () => (await getMeta('seeded', false)) || (await db.templates.count()) > 0,
   write: async (exercises, templates) => {
@@ -104,5 +104,5 @@ const dbStore: SeedStore = {
 };
 
 export function seedIfEmpty(): Promise<void> {
-  return seed(dbStore);
+  return seed(seedDbStore);
 }
