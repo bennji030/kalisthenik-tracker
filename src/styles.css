@@ -248,6 +248,13 @@ p { margin: 0; }
 .settings-form input::-webkit-date-and-time-value { text-align: left; }
 .hint-warn { color: var(--warn); }
 .settings-val { color: var(--text); font-variant-numeric: tabular-nums; }
+.health-guide { display: flex; flex-direction: column; gap: 10px; font-size: 15px; }
+.health-guide ol, .health-guide ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.health-guide ul { margin-top: 6px; }
+.health-guide code { font-size: 13px; overflow-wrap: anywhere; color: var(--text); }
+.copy-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.copy-row .btn { min-height: 44px; }
+.copy-label { font-size: 13px; color: var(--muted); }
 
 /* Plan */
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
