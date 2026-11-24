@@ -74,6 +74,26 @@ npm install
 Fragt die Capacitor-Kommandozeile nach Telemetrie („telemetry“), mit `n`
 antworten und Enter drücken.
 
+**Sicherheit: Lockfile sichern.** `npm install` legt die Datei
+`native/package-lock.json` an. Sie hält die genauen Versionen aller
+mitinstallierten Pakete fest, damit spätere Installationen genau denselben Code
+bekommen. Diese Datei bitte einchecken (im Ordner `native`):
+
+```
+git add package-lock.json
+```
+
+```
+git commit -m "Add native lockfile"
+```
+
+```
+git push
+```
+
+Klappt `git push` nicht (Anmeldung bei GitHub fehlt), ist das kein Problem für
+den Test: einfach weitermachen und im Chat Bescheid geben.
+
 ## 5. Bauen und iOS-Projekt anlegen
 
 Alle Befehle im Ordner `native`:
@@ -159,7 +179,10 @@ Gerät und werden nicht mit übertragen.
 Ein Training starten und Punkt für Punkt prüfen:
 
 1. **Satz abhaken** → kurze, leichte Vibration.
-2. **Erstes Training** → die App fragt, ob sie Mitteilungen senden darf. Erlauben.
+2. **Erstes Training öffnen** → gleich beim Öffnen des Trainings (noch vor dem
+   ersten Satz) fragt das iPhone, ob Calisthenics Mitteilungen senden darf. Auf
+   **Erlauben** tippen. Ohne das kommen keine Pausen-Mitteilungen (siehe
+   Schritt 14, falls versehentlich abgelehnt).
 3. **iPhone während einer Pause sperren** → bei Pausenende kommt eine Mitteilung
    mit Ton: „Pause vorbei“ / „Weiter mit …“ (Name der nächsten Übung).
 4. **App bleibt offen** während der Pause → nur der Piep der App, keine zweite
@@ -210,6 +233,7 @@ Dann in Xcode auf ▶ klicken.
 | „Untrusted Developer“ / „Nicht vertrauenswürdiger Entwickler“ | App vertrauen, siehe Schritt 9. |
 | iOS-Plattform oder iOS-Version nicht installiert | Xcode → Settings → Components → iOS installieren. |
 | Gerät gesperrt oder beschäftigt („preparing“, „busy“) | iPhone entsperren und warten, bis Xcode fertig vorbereitet hat. Dann wieder ▶. |
+| Keine Mitteilung bei Pausenende / Abfrage versehentlich abgelehnt | iPhone → Einstellungen → Mitteilungen → Calisthenics → „Mitteilungen erlauben“ an, „Töne“ an. Steht Calisthenics dort nicht, die App einmal starten und ein Training öffnen, dann noch einmal nachsehen. |
 | Mitteilung kommt ohne Ton | Stummschalter am iPhone und Fokus-Modus (z. B. „Nicht stören“) prüfen. In der App muss „Ton bei Pausenende“ an sein. |
 
 ## 15. Fehler zurückmelden
