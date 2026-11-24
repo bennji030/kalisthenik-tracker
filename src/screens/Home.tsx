@@ -1,22 +1,36 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getMeta, type Session, type Template } from '../db';
+import { db, getMeta, type Exercise, type Session, type Template } from '../db';
 import { startSession } from '../sessions';
 import { estimateMinutes, nextTraining } from '../today';
 import { dayKey } from '../weight';
 import { parseProfile } from '../profile';
 import { streak } from '../streak';
 import { cardioSummary, isCardio, isCardioSession, strengthOnly } from '../cardio';
+import { muscleLoad } from '../muscles';
 import { fmtDate } from '../util';
 import { WeighPrompt } from '../components/Weight';
 import { Habits } from '../components/Habits';
 import { CardioCheck } from '../components/CardioCheck';
+import { BodyMap } from '../components/BodyMap';
 import type { HabitKind } from './HabitMonths';
 import type { DayView } from './DayValues';
 
-function TodayCard({ templates, sessions, openWorkout }: {
+/** Text links, Körper-Grafik rechts; ohne trainierte Muskeln nur der Text wie bisher. */
+function WithBody({ load, children }: { load: ReturnType<typeof muscleLoad>; children: ReactNode }) {
+  if (!Object.keys(load).length) return <>{children}</>;
+  return (
+    <div className="today-row">
+      <div className="today-text">{children}</div>
+      <BodyMap load={load} />
+    </div>
+  );
+}
+
+function TodayCard({ templates, sessions, exercises, openWorkout }: {
   templates: Template[];
   sessions: Session[];
+  exercises: Exercise[];
   openWorkout: (id: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -35,14 +49,20 @@ function TodayCard({ templates, sessions, openWorkout }: {
     .filter((s) => s.finishedAt != null && dayKey(s.startedAt) === today)
     .sort((a, b) => a.startedAt - b.startedAt);
   if (doneToday.length) {
+    const load = muscleLoad(
+      strengthOnly(doneToday).flatMap((s) => s.entries.map((e) => ({ exerciseId: e.exerciseId, sets: e.sets.length }))),
+      exercises,
+    );
     return (
       <section className="card">
-        <h2 className="habit-ok">Erledigt ✓</h2>
-        {doneToday.map((s) => (
-          <p key={s.id} className="muted small">
-            {s.templateName} · {isCardioSession(s) ? cardioSummary(s) : `${Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000)} min`}
-          </p>
-        ))}
+        <WithBody load={load}>
+          <h2 className="habit-ok">Erledigt ✓</h2>
+          {doneToday.map((s) => (
+            <p key={s.id} className="muted small">
+              {s.templateName} · {isCardioSession(s) ? cardioSummary(s) : `${Math.round(((s.finishedAt ?? s.startedAt) - s.startedAt) / 60000)} min`}
+            </p>
+          ))}
+        </WithBody>
       </section>
     );
   }
@@ -56,6 +76,9 @@ function TodayCard({ templates, sessions, openWorkout }: {
       setBusy(false);
       openWorkout(id);
     };
+    // Eine Grafik für alle Krafttage von heute, neben dem ersten.
+    const strength = strengthOnly(todays);
+    const load = muscleLoad(strength.flatMap((t) => t.slots), exercises);
     return (
       <section className="card">
         {todays.map((t) => {
@@ -63,8 +86,10 @@ function TodayCard({ templates, sessions, openWorkout }: {
           const m = estimateMinutes(t.slots);
           return (
             <div key={t.id}>
-              <h2>{t.name}</h2>
-              <p className="muted small">{t.slots.length === 1 ? '1 Übung' : `${t.slots.length} Übungen`}{m > 0 && ` · ca. ${m} min`}</p>
+              <WithBody load={t === strength[0] ? load : {}}>
+                <h2>{t.name}</h2>
+                <p className="muted small">{t.slots.length === 1 ? '1 Übung' : `${t.slots.length} Übungen`}{m > 0 && ` · ca. ${m} min`}</p>
+              </WithBody>
               <button className="btn btn-primary btn-big" disabled={busy} onClick={() => start(t)}>Training starten</button>
             </div>
           );
@@ -92,10 +117,11 @@ export function Home({ goTraining, goSettings, goHabit, goDay, openWorkout, goWe
 }) {
   const templates = useLiveQuery(() => db.templates.orderBy('order').toArray(), []);
   const sessions = useLiveQuery(() => db.sessions.toArray(), []);
+  const exercises = useLiveQuery(() => db.exercises.toArray(), []);
   const profile = useLiveQuery(async () => parseProfile(await getMeta<unknown>('profile', undefined), Date.now()), []);
   const lastBackup = useLiveQuery(() => getMeta<number | null>('lastBackup', null), []);
 
-  if (!templates || !sessions) return <div className="screen" />;
+  if (!templates || !sessions || !exercises) return <div className="screen" />;
 
   const finished = sessions.filter((s) => s.finishedAt);
   const backupDue = finished.length > 0 && (!lastBackup || Date.now() - lastBackup > 7 * 864e5);
@@ -134,7 +160,7 @@ export function Home({ goTraining, goSettings, goHabit, goDay, openWorkout, goWe
         <button className="home-hit" onClick={goTraining} aria-label="Zum Training" />
       </section>
 
-      <TodayCard templates={templates} sessions={sessions} openWorkout={openWorkout} />
+      <TodayCard templates={templates} sessions={sessions} exercises={exercises} openWorkout={openWorkout} />
 
       <WeighPrompt accent={!sessions.some((s) => s.finishedAt == null)} />
 
